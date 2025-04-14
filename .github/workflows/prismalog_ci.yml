@@ -88,12 +88,43 @@ jobs:
       - name: Run pylint
         continue-on-error: true
         run: |
-          mkdir -p reports
-          pylint prismalog --output-format=text > reports/pylint-report.txt || true
-          PYLINT_SCORE=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' reports/pylint-report.txt)
+          mkdir -p reports/pylint
+          mkdir -p reports/badges
+          
+          # Run pylint and save output
+          pylint prismalog --output-format=text > reports/pylint/pylint-report-py${{ matrix.python-version }}.txt || true
+          
+          # Extract score
+          PYLINT_SCORE=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' reports/pylint/pylint-report-py${{ matrix.python-version }}.txt)
           echo "PYLINT_SCORE=$PYLINT_SCORE" >> $GITHUB_ENV
           echo "## PyLint Score: $PYLINT_SCORE/10" >> $GITHUB_STEP_SUMMARY
+          
+          # Generate badge
           anybadge --label="pylint-py${{ matrix.python-version }}" --value=$PYLINT_SCORE --file=reports/badges/pylint-py${{ matrix.python-version }}.svg --suffix=/10 3=red 5=orange 8=yellow 10=green
+          
+          # Create HTML version of the pylint report
+          cat > reports/pylint/pylint-py${{ matrix.python-version }}.html << EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Pylint Report - Python ${{ matrix.python-version }}</title>
+            <style>
+              body { font-family: monospace; max-width: 1000px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+              h1 { color: #333; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+              pre { background-color: #f8f8f8; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; }
+              .score { font-size: 1.2em; font-weight: bold; margin: 20px 0; padding: 10px; background-color: #f0f0f0; border-radius: 5px; }
+              .back-link { margin-top: 30px; }
+            </style>
+          </head>
+          <body>
+            <h1>Pylint Report - Python ${{ matrix.python-version }}</h1>
+            <div class="score">Score: $PYLINT_SCORE/10</div>
+            <pre>$(cat reports/pylint/pylint-report-py${{ matrix.python-version }}.txt)</pre>
+            <div class="back-link"><a href="../../index.html">Back to main page</a></div>
+          </body>
+          </html>
+          EOF
 
       # Step 10: Run code style checks (Black and Flake8)
       - name: Run code style checks
@@ -409,13 +440,12 @@ jobs:
             <div class="card">
               <h2>Code Quality Badges (Markdown)</h2>
               <p class="markdown-badges">
-                <!-- Fixed links to match correct paths -->
                 <a href="reports/html/3.8/index.html"><img src="badges/coverage-py3.8.svg" alt="Coverage Python 3.8"></a>
-                <a href="reports/html/3.8/index.html"><img src="badges/pylint-py3.8.svg" alt="Pylint Python 3.8"></a>
+                <a href="reports/html/3.8/reports/pylint/pylint-py3.8.html"><img src="badges/pylint-py3.8.svg" alt="Pylint Python 3.8"></a>
                 <a href="reports/html/3.10/index.html"><img src="badges/coverage-py3.10.svg" alt="Coverage Python 3.10"></a>
-                <a href="reports/html/3.10/index.html"><img src="badges/pylint-py3.10.svg" alt="Pylint Python 3.10"></a>
+                <a href="reports/html/3.10/reports/pylint/pylint-py3.10.html"><img src="badges/pylint-py3.10.svg" alt="Pylint Python 3.10"></a>
                 <a href="reports/html/3.11/index.html"><img src="badges/coverage-py3.11.svg" alt="Coverage Python 3.11"></a>
-                <a href="reports/html/3.11/index.html"><img src="badges/pylint-py3.11.svg" alt="Pylint Python 3.11"></a>
+                <a href="reports/html/3.11/reports/pylint/pylint-py3.11.html"><img src="badges/pylint-py3.11.svg" alt="Pylint Python 3.11"></a>
               </p>
             </div>
           </body>
@@ -449,6 +479,9 @@ jobs:
                 <h2>Code Quality</h2>
                 <div class="badge"><img src="../../../badges/pylint-py$version.svg" alt="Pylint Score"></div>
                 <div class="badge"><img src="../../../badges/coverage-py$version.svg" alt="Coverage"></div>
+                <ul>
+                  <li><a href="reports/pylint/pylint-py$version.html">View Detailed Pylint Report</a></li>
+                </ul>
               </div>
               <div class="card">
                 <h2>Test Results</h2>
