@@ -36,9 +36,14 @@ yaml = ["pyyaml>=6.0"]
 # For development and testing
 dev = [
     "pytest>=7.0.0",
-    "psutil>=7.0.0",
-    "nltk>=3.9.0",
-    "pyyaml>=6.0",
+    "pytest-cov>=3.0.0",
+    "pytest-html>=3.1.1",
+    "pylint>=2.14.0",
+    "black>=22.6.0",
+    "flake8>=5.0.0",
+    "anybadge>=1.10.0",
+    "build>=0.8.0",
+    "twine>=4.0.0",
 ]
 
 # For documentation
