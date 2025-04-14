@@ -377,19 +377,17 @@ jobs:
               h1 { color: #333; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
               h2 { margin-top: 0; color: #2c3e50; }
               .badge { display: inline-block; margin-right: 10px; margin-bottom: 10px; }
+              .markdown-badges img { margin-right: 5px; }
             </style>
           </head>
           <body>
             <h1>prismalog Test Reports</h1>
 
+            <!-- New Documentation Card -->
             <div class="card">
-              <h2>Code Quality Badges</h2>
-              <div class="badge"><img src="badges/pylint-py3.8.svg" alt="Pylint Score Python 3.8"></div>
-              <div class="badge"><img src="badges/coverage-py3.8.svg" alt="Coverage Python 3.8"></div>
-              <div class="badge"><img src="badges/pylint-py3.10.svg" alt="Pylint Score Python 3.10"></div>
-              <div class="badge"><img src="badges/coverage-py3.10.svg" alt="Coverage Python 3.10"></div>
-              <div class="badge"><img src="badges/pylint-py3.11.svg" alt="Pylint Score Python 3.11"></div>
-              <div class="badge"><img src="badges/coverage-py3.11.svg" alt="Coverage Python 3.11"></div>
+              <h2>Documentation</h2>
+              <p>📑 <a href="https://prismalog.readthedocs.io/" target="_blank">API Documentation</a> - Complete developer reference</p>
+              <p>📋 <a href="README.md">README</a> - Quick overview and installation instructions</p>
             </div>
 
             <div class="card">
@@ -409,12 +407,15 @@ jobs:
             </div>
 
             <div class="card">
-              <h2>Code Quality Badges</h2>
-              <p>
-                [![Coverage Python 3.8](https://vertok.github.io/prismalog/badges/coverage-py3.8.svg)](https://vertok.github.io/prismalog/reports/html/3.8/html/index.html)
-                [![Pylint Python 3.8](https://vertok.github.io/prismalog/badges/pylint-py3.8.svg)](https://vertok.github.io/prismalog/reports/html/3.8/html/index.html)
-                [![Coverage Python 3.10](https://vertok.github.io/prismalog/badges/coverage-py3.10.svg)](https://vertok.github.io/prismalog/reports/html/3.10/html/index.html)
-                [![Pylint Python 3.10](https://vertok.github.io/prismalog/badges/pylint-py3.10.svg)](https://vertok.github.io/prismalog/reports/html/3.10/html/index.html)
+              <h2>Code Quality Badges (Markdown)</h2>
+              <p class="markdown-badges">
+                <!-- Fixed links to match correct paths -->
+                <a href="reports/html/3.8/index.html"><img src="badges/coverage-py3.8.svg" alt="Coverage Python 3.8"></a>
+                <a href="reports/html/3.8/index.html"><img src="badges/pylint-py3.8.svg" alt="Pylint Python 3.8"></a>
+                <a href="reports/html/3.10/index.html"><img src="badges/coverage-py3.10.svg" alt="Coverage Python 3.10"></a>
+                <a href="reports/html/3.10/index.html"><img src="badges/pylint-py3.10.svg" alt="Pylint Python 3.10"></a>
+                <a href="reports/html/3.11/index.html"><img src="badges/coverage-py3.11.svg" alt="Coverage Python 3.11"></a>
+                <a href="reports/html/3.11/index.html"><img src="badges/pylint-py3.11.svg" alt="Pylint Python 3.11"></a>
               </p>
             </div>
           </body>
@@ -450,12 +451,13 @@ jobs:
                 <div class="badge"><img src="../../../badges/coverage-py$version.svg" alt="Coverage"></div>
               </div>
               <div class="card">
-                <h2><a href="pytest_report_$version.html">Test Results</a></h2>
+                <h2>Test Results</h2>
+                <p><a href="reports/html/pytest_report_$version.html">View Detailed Test Results</a></p>
               </div>
               <p><a href="../../../index.html">Back to main page</a></p>
             </body>
             </html>
-          EOF
+            EOF
           done
 
       - name: Copy README to site directory
