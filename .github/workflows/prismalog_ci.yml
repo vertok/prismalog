@@ -387,6 +387,16 @@ jobs:
                 <li><a href="htmlcov/index.html">Coverage Report</a></li>
               </ul>
             </div>
+
+            <div class="card">
+              <h2>Code Quality Badges</h2>
+              <p>
+                [![Coverage Python 3.8](https://vertok.github.io/prismalog/badges/coverage-py3.8.svg)](https://vertok.github.io/prismalog/reports/html/3.8/html/index.html)
+                [![Pylint Python 3.8](https://vertok.github.io/prismalog/badges/pylint-py3.8.svg)](https://vertok.github.io/prismalog/reports/html/3.8/html/index.html)
+                [![Coverage Python 3.10](https://vertok.github.io/prismalog/badges/coverage-py3.10.svg)](https://vertok.github.io/prismalog/reports/html/3.10/html/index.html)
+                [![Pylint Python 3.10](https://vertok.github.io/prismalog/badges/pylint-py3.10.svg)](https://vertok.github.io/prismalog/reports/html/3.10/html/index.html)
+              </p>
+            </div>
           </body>
           </html>
           EOF
@@ -426,7 +436,6 @@ jobs:
             </body>
             </html>
             EOF
-          done
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
