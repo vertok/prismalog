@@ -241,10 +241,10 @@ def main():
     """
     # Configuration - generate approximately the same number of
     # total messages as the other tests for fair comparison
-    NUM_PROCESSES = 3            # pylint: disable=invalid-name
-    THREADS_PER_PROCESS = 2      # pylint: disable=invalid-name
-    MESSAGES_PER_THREAD = 10000  # pylint: disable=invalid-name
-    BATCH_SIZE = 100             # pylint: disable=invalid-name
+    NUM_PROCESSES = 2           # pylint: disable=invalid-name
+    THREADS_PER_PROCESS = 2     # pylint: disable=invalid-name
+    MESSAGES_PER_THREAD = 1000  # pylint: disable=invalid-name
+    BATCH_SIZE = 100            # pylint: disable=invalid-name
 
     print(f"\n{'='*60}")
     print(f"MIXED CONCURRENCY LOGGER PERFORMANCE TEST - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

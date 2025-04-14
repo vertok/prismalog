@@ -199,9 +199,9 @@ def main():
     Run this function to benchmark the prismalog package's performance.
     """
     # Configuration
-    NUM_PROCESSES = 3             # pylint: disable=invalid-name
-    MESSAGES_PER_PROCESS = 10000  # pylint: disable=invalid-name
-    BATCH_SIZE = 100              # pylint: disable=invalid-name
+    NUM_PROCESSES = 2            # pylint: disable=invalid-name
+    MESSAGES_PER_PROCESS = 1000  # pylint: disable=invalid-name
+    BATCH_SIZE = 100             # pylint: disable=invalid-name
 
     print(f"\n{'='*60}")
     print(f"COLORED LOGGER PERFORMANCE TEST - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

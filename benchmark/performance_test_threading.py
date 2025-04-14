@@ -199,7 +199,7 @@ def main():
     """
     # Configuration - use the same parameters as the multiprocessing test
     NUM_THREADS = 4
-    MESSAGES_PER_THREAD = 10000
+    MESSAGES_PER_THREAD = 1000
     BATCH_SIZE = 100
 
     # Prepare benchmark directory and results file
