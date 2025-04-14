@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pylint Report - Python 3.8</title>
+  <style>
+    body { font-family: monospace; max-width: 1000px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+    h1 { color: #333; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    pre { background-color: #f8f8f8; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; }
+    .score { font-size: 1.2em; font-weight: bold; margin: 20px 0; padding: 10px; background-color: #f0f0f0; border-radius: 5px; }
+    .back-link { margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <h1>Pylint Report - Python 3.8</h1>
+  <div class="score">Score: 9.24/10</div>
+  <pre>************* Module prismalog.log
+prismalog/log.py:130:12: W0702: No exception type(s) specified (bare-except)
+prismalog/log.py:148:13: W0212: Access to a protected member _file_lock of a client class (protected-access)
+prismalog/log.py:150:32: W0212: Access to a protected member _active_log_file of a client class (protected-access)
+prismalog/log.py:152:32: W0212: Access to a protected member _active_log_file of a client class (protected-access)
+prismalog/log.py:169:19: W0718: Catching too general exception Exception (broad-exception-caught)
+prismalog/log.py:164:20: W0702: No exception type(s) specified (bare-except)
+prismalog/log.py:175:16: W0702: No exception type(s) specified (bare-except)
+prismalog/log.py:189:13: W0212: Access to a protected member _file_lock of a client class (protected-access)
+prismalog/log.py:223:19: W0718: Catching too general exception Exception (broad-exception-caught)
+prismalog/log.py:205:16: W0212: Access to a protected member _active_log_file of a client class (protected-access)
+prismalog/log.py:225:16: W0212: Access to a protected member _debug_print of a client class (protected-access)
+prismalog/log.py:293:11: W0212: Access to a protected member _exit_disabled of a client class (protected-access)
+prismalog/log.py:360:8: W0212: Access to a protected member _initialized_loggers of a client class (protected-access)
+prismalog/log.py:385:15: W0212: Access to a protected member _file_handler of a client class (protected-access)
+prismalog/log.py:386:12: W0212: Access to a protected member _file_handler of a client class (protected-access)
+prismalog/log.py:386:43: W0212: Access to a protected member _setup_file_handler of a client class (protected-access)
+prismalog/log.py:387:26: W0212: Access to a protected member _file_handler of a client class (protected-access)
+prismalog/log.py:417:12: W0212: Access to a protected member _debug_print of a client class (protected-access)
+prismalog/log.py:428:12: W0212: Access to a protected member _debug_print of a client class (protected-access)
+prismalog/log.py:471:23: W0718: Catching too general exception Exception (broad-exception-caught)
+prismalog/log.py:481:19: W0718: Catching too general exception Exception (broad-exception-caught)
+prismalog/log.py:621:4: W0603: Using the global statement (global-statement)
+prismalog/log.py:628:15: W0212: Access to a protected member _initialized_loggers of a client class (protected-access)
+prismalog/log.py:634:15: W0212: Access to a protected member _initialized_loggers of a client class (protected-access)
+************* Module prismalog.config
+prismalog/config.py:236:0: C0301: Line too long (140/120) (line-too-long)
+prismalog/config.py:237:0: C0301: Line too long (140/120) (line-too-long)
+prismalog/config.py:238:0: C0301: Line too long (143/120) (line-too-long)
+prismalog/config.py:239:0: C0301: Line too long (132/120) (line-too-long)
+prismalog/config.py:241:0: C0301: Line too long (134/120) (line-too-long)
+prismalog/config.py:216:15: W0718: Catching too general exception Exception (broad-exception-caught)
+
+-----------------------------------
+Your code has been rated at 9.24/10</pre>
+  <div class="back-link"><a href="../../index.html">Back to main page</a></div>
+</body>
+</html>
