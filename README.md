@@ -5,11 +5,11 @@ A robust, multi-process safe logging system for Python applications that integra
 [![PyPI version](https://img.shields.io/pypi/v/prismalog.svg)](https://pypi.org/project/prismalog/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/prismalog.svg)](https://pypi.org/project/prismalog/)
 [![Coverage Python 3.8](https://vertok.github.io/prismalog/badges/coverage-py3.8.svg)](https://vertok.github.io/prismalog/htmlcov/index.html)
-[![Pylint Python 3.8](https://vertok.github.io/prismalog/badges/pylint-py3.8.svg)](https://vertok.github.io/prismalog/reports/html/3.8/index.html)
+[![Pylint Python 3.8](https://vertok.github.io/prismalog/badges/pylint-py3.8.svg)](https://vertok.github.io/prismalog/reports/3.8/index.html)
 [![Coverage Python 3.10](https://vertok.github.io/prismalog/badges/coverage-py3.10.svg)](https://vertok.github.io/prismalog/htmlcov/index.html)
-[![Pylint Python 3.10](https://vertok.github.io/prismalog/badges/pylint-py3.10.svg)](https://vertok.github.io/prismalog/reports/html/3.10/index.html)
+[![Pylint Python 3.10](https://vertok.github.io/prismalog/badges/pylint-py3.10.svg)](https://vertok.github.io/prismalog/reports/3.10/index.html)
 [![Coverage Python 3.11](https://vertok.github.io/prismalog/badges/coverage-py3.11.svg)](https://vertok.github.io/prismalog/htmlcov/index.html)
-[![Pylint Python 3.11](https://vertok.github.io/prismalog/badges/pylint-py3.11.svg)](https://vertok.github.io/prismalog/reports/html/3.11/index.html)
+[![Pylint Python 3.11](https://vertok.github.io/prismalog/badges/pylint-py3.11.svg)](https://vertok.github.io/prismalog/reports/3.11/index.html)
 
 ## Features
 
