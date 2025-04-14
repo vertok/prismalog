@@ -1,0 +1,21 @@
+{% extends "!layout.html" %}
+
+{% block extrahead %}
+{{ super() }}
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% endblock %}
+
+{% block footer %}
+{{ super() }}
+<div class="footer">
+  <div class="container">
+    <div class="footer-info">
+      <p>
+        prismalog - A high-performance, colored, multi-process logging system
+        <br>
+        Created by <a href="https://github.com/vertok">Alexey Obukhov</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

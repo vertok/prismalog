@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prismalog"
+version = "0.1.0"
+description = "A high-performance, colored, multi-process logging system"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Alexey Obukhov", email = "alexey.obukhov@hotmail.com"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: System :: Logging",
+    "Intended Audience :: Developers",
+    "Development Status :: 4 - Beta",
+]
+keywords = ["logging", "colored", "multiprocess", "performance"]
+
+# No required dependencies - core functionality works with standard library
+dependencies = []
+
+[project.optional-dependencies]
+# For YAML configuration support
+yaml = ["pyyaml>=6.0"]
+
+# For development and testing
+dev = [
+    "pytest>=7.0.0",
+    "psutil>=7.0.0",
+    "nltk>=3.9.0",
+    "pyyaml>=6.0",
+]
+
+# For documentation
+docs = [
+    "sphinx>=4.5.0,<5.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "sphinx-autodoc-typehints>=1.18.0",
+    "sphinx-design>=0.5.0"
+]
+
+# For all features
+all = [
+    "pyyaml>=6.0",
+    "psutil>=7.0.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/vertok/prismalog"
+"Bug Tracker" = "https://github.com/vertok/prismalog/issues"
+"Documentation" = "https://github.com/vertok/prismalog#readme"
+
+[tool.setuptools]
+packages = ["prismalog"]
+
+[tool.setuptools.package-data]
+prismalog = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"

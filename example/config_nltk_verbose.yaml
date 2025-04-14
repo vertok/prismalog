@@ -1,0 +1,8 @@
+# Verbose config (default logging behavior)
+log_dir: ./logs
+default_level: INFO
+rotation_size_mb: 5
+backup_count: 3
+colored_console: true
+
+# No external_loggers section - everything is at default levels

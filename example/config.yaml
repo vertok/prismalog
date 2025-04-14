@@ -1,0 +1,32 @@
+# config.yaml
+
+# Directory where log files will be stored
+log_dir: ./local-logs
+
+# Default logging level for application loggers
+# Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+default_level: INFO
+
+# Maximum log file size in megabytes before rotation
+# When the file reaches this size, it will be renamed and a new file started
+rotation_size_mb: 5
+
+# Number of backup log files to keep after rotation
+# For example, with backup_count=3 :-> app.log and app.log.1, app.log.2, app.log.3
+backup_count: 3
+
+# Whether to apply color formatting to console output
+# Colors make logs more readable in terminal by color-coding log levels
+colored_console: true
+
+# Whether to exit the program when a critical error is logged
+# If set to false - execution will be not terminated after critical errors
+exit_on_critical: true
+
+# Control the verbosity of external libraries
+# This helps reduce noise from third-party packages while maintaining detailed
+# application logs. Each library can have its own log level configured.
+external_loggers:
+  nltk: WARNING               # Natural Language Toolkit
+  matplotlib: ERROR           # Plotting library
+  PIL: WARNING                # Python Imaging Library

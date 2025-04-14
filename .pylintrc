@@ -1,0 +1,10 @@
+[MASTER]
+# Specify a configuration file.
+# This is the default configuration file for pylint.
+
+[FORMAT]
+# Allow short variable names like 'e' (commonly used for exceptions)
+good-names=e,f
+
+# Set maximum allowed line length to 120 characters
+max-line-length=120

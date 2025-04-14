@@ -1,0 +1,18 @@
+# config.yaml
+log_dir: ./local-logs
+default_level: INFO
+rotation_size_mb: 5
+backup_count: 3
+colored_console: true
+exit_on_critical: false  # to continue execution after critical errors
+
+# External loggers configuration
+external_loggers:
+  nltk: WARNING
+  transformers: ERROR
+  botocore: WARNING
+  urllib3: WARNING
+  spacy: WARNING
+  pytorch_pretrained_bert: ERROR
+  matplotlib: WARNING
+  PIL: WARNING
