@@ -176,23 +176,25 @@ class LoggingConfig:
         """
         Load configuration from a YAML or JSON file.
 
-        Supports .yaml, .yml, and .json files. Values from the file will
-        update the current configuration. If the file doesn't exist or
-        can't be parsed, a warning is printed and the configuration is unchanged.
+        Supports .yaml, .yml, and .json files. Values from the file will be returned
+        as a dictionary. If the file doesn't exist or can't be parsed, a warning is
+        printed and an empty dictionary is returned.
 
         Args:
             config_path: Path to the configuration file
 
         Returns:
-            The updated configuration dictionary
+            A dictionary containing the configuration loaded from the file
 
         Example:
             ```python
             config = LoggingConfig.load_from_file("configs/production.yaml")
             ```
         """
+        file_config = {}  # Initialize with empty dict instead of returning cls._config
+
         if not os.path.exists(config_path):
-            return cls._config
+            return file_config  # Return empty dict, not cls._config
 
         try:
             with open(config_path, mode='r', encoding='utf-8') as f:
@@ -202,21 +204,22 @@ class LoggingConfig:
                         file_config = yaml.safe_load(f)
                     except ImportError:
                         cls._debug_print("YAML support requires PyYAML package. Install with: pip install pyyaml")
-                        return cls._config
+                        return file_config
                 elif config_path.endswith('.json'):
                     import json  # pylint: disable=import-outside-toplevel
                     file_config = json.load(f)
                 else:
                     cls._debug_print(f"Unsupported config file format: {config_path}")
-                    return cls._config
+                    return file_config
 
-                # Update config with file values
-                if file_config and isinstance(file_config, dict):
-                    cls._config.update(file_config)
+                # Return the loaded config rather than updating cls._config
+                if not file_config or not isinstance(file_config, dict):
+                    return {}
+
         except Exception as e:
             cls._debug_print(f"Error loading config file: {e}")
 
-        return cls._config
+        return file_config
 
     @classmethod
     def load_from_env(cls) -> Dict[str, Any]:
@@ -235,7 +238,8 @@ class LoggingConfig:
         env_vars = {
             'log_dir': ['GITHUB_LOGGING_DIR', 'LOGGING_DIR', 'LOG_DIR', 'LOGGING_CONFIG_DIR', 'LOG_CONFIG_DIR', 'LOGGING_PATH', 'LOG_PATH'],
             'default_level': ['GITHUB_LOGGING_VERBOSE', 'LOGGING_VERBOSE', 'LOG_LEVEL', 'LOGGING_LEVEL', 'LOG_CONFIG_LEVEL', 'LOG_VERBOSE'],
-            'rotation_size_mb': ['GITHUB_LOG_ROTATION_SIZE', 'LOG_ROTATION_SIZE', 'LOGGING_ROTATION_SIZE', 'LOG_MAX_SIZE', 'LOGGING_MAX_SIZE'],
+            'rotation_size_mb': ['GITHUB_LOG_ROTATION_SIZE', 'LOG_ROTATION_SIZE', 'LOG_ROTATION_SIZE_MB',
+                                 'LOGGING_ROTATION_SIZE', 'LOGGING_ROTATION_SIZE_MB', 'LOG_MAX_SIZE', 'LOGGING_MAX_SIZE'],
             'backup_count': ['GITHUB_LOG_BACKUP_COUNT', 'LOG_BACKUP_COUNT', 'LOGGING_BACKUP_COUNT', 'LOG_BACKUP', 'LOGGING_BACKUP'],
             'log_format': ['GITHUB_LOG_FORMAT', 'LOG_FORMAT'],
             'colored_console': ['GITHUB_LOG_COLORED_CONSOLE', 'LOG_COLORED_CONSOLE', 'LOGGING_COLORED', 'LOG_COLOR', 'LOGGING_COLOR'],
