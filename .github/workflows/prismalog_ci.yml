@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+    # Build job: Runs tests, generates reports, and uploads artifacts for multiple Python versions
     runs-on: ubuntu-latest
     env:
       LOGGING_DIR: logs
@@ -18,33 +19,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.10"]
+        python-version: ["3.8", "3.10", "3.11"]
 
     steps:
-      - uses: actions/checkout@v3
+      # Step 1: Check out the repository
+      - uses: actions/checkout@v4
 
+      # Step 2: Set up Python environment
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip wheel setuptools
-          # Install the package with dev dependencies using pyproject.toml
           pip install -e ".[dev]"
-          # Install additional test tooling
           pip install pytest-cov pytest-html pylint black flake8 anybadge
 
+      # Step 4: Run unit tests with coverage
       - name: Run unit tests
         id: pytest
         continue-on-error: true
         run: |
-          # Create directories for test results
           mkdir -p junit
           mkdir -p reports/html
-
-          # Run pytest with coverage
           python -m pytest tests/ --cov=prismalog \
             --cov-report=xml:coverage.xml \
             --cov-report=html:htmlcov \
@@ -52,49 +52,39 @@ jobs:
             --self-contained-html \
             --junitxml=junit/test-results.xml || echo "::set-output name=pytest_failed::true"
 
+      # Step 5: Test multiprocessing capability
       - name: Test multiprocessing capability
         run: |
-          # Run example that verifies multiprocessing functionality
           python example/log_sequence_test.py
 
+      # Step 6: Test logging performance
       - name: Test logging performance
         run: |
-          # Test logging performance using dedicated performance test
           python benchmark/performance_test_multiprocessing.py > reports/performance_py${{ matrix.python-version }}.txt
-
-          # Extract key metrics using grep or a Python script
           MSGS_PER_SEC=$(grep -oP '(?<=Messages per second: )[0-9.]+' reports/performance_py${{ matrix.python-version }}.txt || echo "0")
           echo "## Performance: $MSGS_PER_SEC messages/sec" >> $GITHUB_STEP_SUMMARY
 
+      # Step 7: Run comprehensive performance comparison (only for Python 3.10 to avoid long run times)
       - name: Run comprehensive performance comparison
-        if: matrix.python-version == '3.10'  # Only run on one Python version
+        if: matrix.python-version == '3.10'
         run: |
-          # Run the performance comparison script
           python benchmark/performance_compare.py > reports/performance_comparison.txt
-
-          # Copy the benchmark README to the reports directory
           cp benchmark/README.md reports/benchmark_results.md
-
           echo "## Performance Comparison Completed" >> $GITHUB_STEP_SUMMARY
 
+      # Step 8: Generate coverage badge
       - name: Generate coverage badge
         run: |
           mkdir -p reports/badges
-
-          # Extract coverage percentage
           COVERAGE="0.0"
           [ -f coverage.xml ] && COVERAGE=$(python -c "import xml.etree.ElementTree as ET; print(ET.parse('coverage.xml').getroot().attrib.get('line-rate', '0.0'))")
-
-          # Convert to percentage
           COVERAGE_PCT=$(python -c "print(round(float('$COVERAGE') * 100, 2))")
           COLOR=$(python -c "c=float('$COVERAGE_PCT'); print('red' if c < 50 else 'yellow' if c < 80 else 'green')")
-
           echo "COVERAGE_PCT=$COVERAGE_PCT" >> $GITHUB_ENV
           echo "## Test Coverage: $COVERAGE_PCT%" >> $GITHUB_STEP_SUMMARY
-
-          # Create badge
           anybadge --label="coverage-py${{ matrix.python-version }}" --value=$COVERAGE_PCT --file=reports/badges/coverage-py${{ matrix.python-version }}.svg --suffix=% 50=red 60=orange 80=yellow 100=green
 
+      # Step 9: Run pylint and generate badge
       - name: Run pylint
         continue-on-error: true
         run: |
@@ -103,37 +93,32 @@ jobs:
           PYLINT_SCORE=$(sed -n 's/^Your code has been rated at \([-0-9.]*\)\/.*/\1/p' reports/pylint-report.txt)
           echo "PYLINT_SCORE=$PYLINT_SCORE" >> $GITHUB_ENV
           echo "## PyLint Score: $PYLINT_SCORE/10" >> $GITHUB_STEP_SUMMARY
-
-          # Create badge
           anybadge --label="pylint-py${{ matrix.python-version }}" --value=$PYLINT_SCORE --file=reports/badges/pylint-py${{ matrix.python-version }}.svg --suffix=/10 3=red 5=orange 8=yellow 10=green
 
+      # Step 10: Run code style checks (Black and Flake8)
       - name: Run code style checks
         continue-on-error: true
         run: |
-          # Black - Check if files would change with formatting
           python -m black --check prismalog tests || echo "::warning::Black formatting check failed"
-
-          # Flake8 - Check PEP8 compliance
           python -m flake8 prismalog --count --select=E9,F63,F7,F82 --show-source --statistics
 
+      # Step 11: Check memory footprint
       - name: Check memory footprint
         run: |
-          # Extracting memory info from performance test
           INITIAL_MEM=$(grep -oP '(?<=Initial: )[0-9.]+(?= MB)' reports/performance_py${{ matrix.python-version }}.txt || echo "N/A")
           FINAL_MEM=$(grep -oP '(?<=Final: )[0-9.]+(?= MB)' reports/performance_py${{ matrix.python-version }}.txt || echo "N/A")
           DELTA_MEM=$(grep -oP '(?<=Delta: )[0-9.]+(?= MB)' reports/performance_py${{ matrix.python-version }}.txt || echo "N/A")
-
           echo "## Memory Usage (Py ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
           echo "- $INITIAL_MEM MB initial memory" >> $GITHUB_STEP_SUMMARY
           echo "- $FINAL_MEM MB final memory" >> $GITHUB_STEP_SUMMARY
           echo "- $DELTA_MEM MB memory increase" >> $GITHUB_STEP_SUMMARY
 
+      # Step 12: Test GitHub secrets integration
       - name: Test with GitHub Secrets Environment
         env:
           GITHUB_LOGGING_DIR: ./github-action-logs
           GITHUB_LOGGING_VERBOSE: DEBUG
         run: |
-          # Test that GitHub secrets integration works
           python -c "
           from prismalog import get_logger, LoggingConfig
           LoggingConfig.initialize()
@@ -148,9 +133,9 @@ jobs:
           assert level == 'DEBUG', 'GitHub secret not applied'
           print('GitHub secrets integration working correctly')
           "
-
           echo "## GitHub Secrets Integration: Passed" >> $GITHUB_STEP_SUMMARY
 
+      # Step 13: Generate HTML report index
       - name: Generate HTML report index
         run: |
           cat > reports/html/index.html << 'EOF'
@@ -239,6 +224,7 @@ jobs:
           </html>
           EOF
 
+      # Step 14: Upload test reports and artifacts
       - name: Upload test reports
         uses: actions/upload-artifact@v4
         if: always()
@@ -250,6 +236,42 @@ jobs:
             htmlcov/
             coverage.xml
 
+      # Step 15, 16, 17: Upload badges per Python version
+      - name: Upload Python 3.8 badges
+        uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.8'
+        with:
+          name: badges-py3.8-${{ github.sha }}
+          path: reports/badges/
+
+      - name: Upload Python 3.10 badges
+        uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.10'
+        with:
+          name: badges-py3.10-${{ github.sha }}
+          path: reports/badges/
+
+      - name: Upload Python 3.11 badges
+        uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.11'
+        with:
+          name: badges-py3.11-${{ github.sha }}
+          path: reports/badges/
+
+      # Step 18: Build the package for distribution
+      - name: Build package
+        run: |
+          pip install build
+          python -m build
+
+      # Step 19: Store build artifacts
+      - name: Store build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.python-version }}
+          path: dist/
+          retention-days: 7
+
   deploy-reports:
     needs: build
     runs-on: ubuntu-latest
@@ -258,7 +280,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Create directories
         run: |
@@ -266,40 +288,145 @@ jobs:
           mkdir -p site/reports/html
           mkdir -p site/htmlcov
 
-      - name: Download artifacts
+      # Download version-specific badges and reports
+      - name: Download Python 3.8 badges
+        uses: actions/download-artifact@v4
+        with:
+          name: badges-py3.8-${{ github.sha }}
+          path: site/badges
+
+      - name: Download Python 3.10 badges
+        uses: actions/download-artifact@v4
+        with:
+          name: badges-py3.10-${{ github.sha }}
+          path: site/badges
+
+      - name: Download Python 3.11 badges
+        uses: actions/download-artifact@v4
+        with:
+          name: badges-py3.11-${{ github.sha }}
+          path: site/badges
+
+      - name: Download HTML reports for Python 3.8
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports-3.8
+          path: site/reports/html/3.8
+        continue-on-error: true
+
+      - name: Download HTML reports for Python 3.10
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports-3.10
+          path: site/reports/html/3.10
+        continue-on-error: true
+
+      - name: Download HTML reports for Python 3.11
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports-3.11
+          path: site/reports/html/3.11
+        continue-on-error: true
+
+      # Other artifacts can be downloaded in the same way
+      - name: Download coverage HTML
         uses: actions/download-artifact@v4
         with:
           pattern: test-reports-*
           path: site/temp
           merge-multiple: true
 
-      - name: Organize site
+      - name: Move coverage HTML
         run: |
-          # Copy badge files
-          cp -r site/temp/reports/badges/* site/badges/ || true
+          if [ -d "site/temp/htmlcov" ]; then
+            cp -r site/temp/htmlcov/* site/htmlcov/
+          fi
 
-          # Copy HTML reports
-          cp -r site/temp/reports/html/* site/reports/html/ || true
-
-          # Copy coverage HTML
-          cp -r site/temp/htmlcov/* site/htmlcov/ || true
-
-          # Copy performance reports
-          cp -r site/temp/reports/*.txt site/reports/ || true
-
-      - name: Create redirect index
+      # Create a consolidated index page that links to all version-specific reports
+      - name: Create main index
         run: |
           cat > site/index.html << EOF
           <!DOCTYPE html>
           <html>
           <head>
-            <meta http-equiv="refresh" content="0; url='reports/html/index.html'" />
+            <meta charset="UTF-8">
+            <title>prismalog Test Reports</title>
+            <style>
+              body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+              .card { border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+              h1 { color: #333; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+              h2 { margin-top: 0; color: #2c3e50; }
+              .badge { display: inline-block; margin-right: 10px; margin-bottom: 10px; }
+            </style>
           </head>
           <body>
-            <p>Redirecting to <a href="reports/html/index.html">test reports</a>...</p>
+            <h1>prismalog Test Reports</h1>
+
+            <div class="card">
+              <h2>Code Quality Badges</h2>
+              <div class="badge"><img src="badges/pylint-py3.8.svg" alt="Pylint Score Python 3.8"></div>
+              <div class="badge"><img src="badges/coverage-py3.8.svg" alt="Coverage Python 3.8"></div>
+              <div class="badge"><img src="badges/pylint-py3.10.svg" alt="Pylint Score Python 3.10"></div>
+              <div class="badge"><img src="badges/coverage-py3.10.svg" alt="Coverage Python 3.10"></div>
+              <div class="badge"><img src="badges/pylint-py3.11.svg" alt="Pylint Score Python 3.11"></div>
+              <div class="badge"><img src="badges/coverage-py3.11.svg" alt="Coverage Python 3.11"></div>
+            </div>
+
+            <div class="card">
+              <h2>Test Reports by Python Version</h2>
+              <ul>
+                <li><a href="reports/html/3.8/html/index.html">Python 3.8 Test Report</a></li>
+                <li><a href="reports/html/3.10/html/index.html">Python 3.10 Test Report</a></li>
+                <li><a href="reports/html/3.11/html/index.html">Python 3.11 Test Report</a></li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h2>Coverage Reports</h2>
+              <ul>
+                <li><a href="htmlcov/index.html">Coverage Report</a></li>
+              </ul>
+            </div>
           </body>
           </html>
           EOF
+
+      - name: Generate version-specific report index
+        run: |
+          for version in "3.8" "3.10" "3.11"; do
+            mkdir -p site/reports/html/$version
+            cat > site/reports/html/$version/index.html << EOF
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>prismalog Python $version Test Reports</title>
+              <style>
+                body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+                .card { border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                h1 { color: #333; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+                h2 { margin-top: 0; color: #2c3e50; }
+                .badge { display: inline-block; margin-right: 10px; margin-bottom: 10px; }
+                .metrics { font-family: monospace; background-color: #f8f8f8; padding: 10px; border-radius: 4px; }
+                .feature-table { width: 100%; border-collapse: collapse; }
+                .feature-table th, .feature-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              </style>
+            </head>
+            <body>
+              <h1>prismalog Python $version Test Report</h1>
+              <div class="card">
+                <h2>Code Quality</h2>
+                <div class="badge"><img src="../../../badges/pylint-py$version.svg" alt="Pylint Score"></div>
+                <div class="badge"><img src="../../../badges/coverage-py$version.svg" alt="Coverage"></div>
+              </div>
+              <div class="card">
+                <h2><a href="pytest_report_$version.html">Test Results</a></h2>
+              </div>
+              <p><a href="../../../index.html">Back to main page</a></p>
+            </body>
+            </html>
+            EOF
+          done
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -333,3 +460,35 @@ jobs:
   #         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
   #         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
   #       run: twine upload dist/*
+
+  # create-release:
+  #   needs: publish
+  #   runs-on: ubuntu-latest
+  #   if: startsWith(github.ref, 'refs/tags/v')
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+
+  #     - name: Generate release notes
+  #       id: release_notes
+  #       run: |
+  #         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+  #         echo "Generating release notes for $VERSION"
+
+  #         # Extract changelog entries for this version
+  #         NOTES=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '1d;$d')
+
+  #         # Format for GitHub release
+  #         echo "notes<<EOF" >> $GITHUB_OUTPUT
+  #         echo "$NOTES" >> $GITHUB_OUTPUT
+  #         echo "EOF" >> $GITHUB_OUTPUT
+
+  #     - name: Create GitHub Release
+  #       uses: softprops/action-gh-release@v1
+  #       with:
+  #         files: |
+  #           dist/*
+  #         body: ${{ steps.release_notes.outputs.notes }}
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

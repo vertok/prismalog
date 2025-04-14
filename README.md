@@ -28,6 +28,21 @@ prismalog was designed for high-performance applications. My testing shows:
 - **Throughput**: Capable of handling 20,000+ messages per second
 - **Multi-process/Multi-threading safety**: No measurable performance penalty compared to single-process
 
+## Performance Notes
+
+While prismalog achieves excellent performance characteristics, it's important to note that the primary bottleneck is filesystem I/O when writing to log files. This limitation is inherent to disk-based logging systems:
+
+- File locking mechanisms required for multi-process safety introduce some overhead
+- Synchronous writes to ensure log integrity can impact throughput during high-volume logging events
+- Storage device speed directly impacts maximum sustainable throughput
+
+For applications with extreme logging requirements, consider:
+- Using an asynchronous logging configuration
+- Implementing log batching for high-volume events
+- Configuring separate log files for different components to distribute I/O load
+
+The current performance metrics were achieved with standard SSD hardware. With specialized I/O optimization or enterprise-grade storage systems, significantly higher throughput is achievable.
+
 ## Quick Start
 
 ```python
