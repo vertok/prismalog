@@ -395,9 +395,9 @@ jobs:
             <div class="card">
               <h2>Test Reports by Python Version</h2>
               <ul>
-                <li><a href="reports/html/3.8/html/index.html">Python 3.8 Test Report</a></li>
-                <li><a href="reports/html/3.10/html/index.html">Python 3.10 Test Report</a></li>
-                <li><a href="reports/html/3.11/html/index.html">Python 3.11 Test Report</a></li>
+                <li><a href="reports/html/3.8/index.html">Python 3.8 Test Report</a></li>
+                <li><a href="reports/html/3.10/index.html">Python 3.10 Test Report</a></li>
+                <li><a href="reports/html/3.11/index.html">Python 3.11 Test Report</a></li>
               </ul>
             </div>
 
