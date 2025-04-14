@@ -457,7 +457,7 @@ jobs:
               <p><a href="../../../index.html">Back to main page</a></p>
             </body>
             </html>
-            EOF
+          EOF
           done
 
       - name: Copy README to site directory
