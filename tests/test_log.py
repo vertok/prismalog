@@ -2,6 +2,8 @@ import os
 import pytest
 import logging
 import sys
+import io
+import contextlib
 from unittest import mock
 from datetime import datetime, timedelta
 from prismalog.log import ColoredLogger, CriticalExitHandler, MultiProcessingLog, get_logger
@@ -306,3 +308,186 @@ class TestColoredLogger:
             f for f in os.listdir(temp_log_dir) if f.startswith("app_") and f.endswith(".log")
         ]
         assert len(rotated_files) > 1  # Ensure rotation occurred
+
+    def test_update_logger_level(self):
+        """Test that update_logger_level changes the log level of an existing logger."""
+        # Clear existing test output
+        test_stdout.clear()
+        
+        # Create a logger with INFO level
+        logger1 = get_logger("test_update_level", "INFO")
+        assert logger1.level == logging.INFO
+        
+        # Replace handlers to use test_stdout
+        self._replace_handlers_for_logger(logger1.logger)
+        
+        # Log messages at different levels
+        logger1.info("This should appear")
+        logger1.debug("This should not appear")
+        
+        # Force flush handlers
+        for handler in logger1.logger.handlers:
+            if hasattr(handler, 'flush'):
+                handler.flush()
+        
+        # Check output
+        output = test_stdout.getvalue()
+        assert "This should appear" in output
+        assert "This should not appear" not in output
+        
+        # Clear output for next test
+        test_stdout.clear()
+        
+        # Update the log level to DEBUG
+        ColoredLogger.update_logger_level("test_update_level", "DEBUG")
+        assert logger1.level == logging.DEBUG
+        
+        # Log messages again
+        logger1.info("This should still appear")
+        logger1.debug("This should now appear")
+        
+        # Force flush handlers
+        for handler in logger1.logger.handlers:
+            if hasattr(handler, 'flush'):
+                handler.flush()
+        
+        # Check output again
+        output = test_stdout.getvalue()
+        assert "This should still appear" in output
+        assert "This should now appear" in output
+        
+        # Clear output for next test
+        test_stdout.clear()
+        
+        # Update to a more restrictive level
+        ColoredLogger.update_logger_level("test_update_level", "WARNING")
+        assert logger1.level == logging.WARNING
+        
+        # Log messages again
+        logger1.warning("This warning should appear")
+        logger1.info("This info should not appear")
+        
+        # Force flush handlers
+        for handler in logger1.logger.handlers:
+            if hasattr(handler, 'flush'):
+                handler.flush()
+        
+        # Check output again
+        output = test_stdout.getvalue()
+        assert "This warning should appear" in output
+        assert "This info should not appear" not in output
+
+    def test_level_setter(self):
+        """Test that the level setter properly updates console handlers."""
+        # Clear existing test output
+        test_stdout.clear()
+        
+        # Create a logger with an initial level
+        logger = get_logger("test_level_setter", "INFO")
+        
+        # Replace handlers to use test_stdout
+        self._replace_handlers_for_logger(logger.logger)
+        
+        # Log messages at different levels
+        logger.info("Info message should appear")
+        logger.debug("Debug message should not appear")
+        
+        # Force flush handlers
+        for handler in logger.logger.handlers:
+            if hasattr(handler, 'flush'):
+                handler.flush()
+        
+        # Check output
+        output = test_stdout.getvalue()
+        assert "Info message should appear" in output
+        assert "Debug message should not appear" not in output
+        
+        # Clear output for next test
+        test_stdout.clear()
+        
+        # Use the level setter to change the level
+        logger.level = logging.DEBUG
+        
+        # Log message at DEBUG level
+        logger.debug("Debug message should now appear")
+        
+        # Force flush handlers
+        for handler in logger.logger.handlers:
+            if hasattr(handler, 'flush'):
+                handler.flush()
+        
+        # Check output
+        output = test_stdout.getvalue()
+        assert "Debug message should now appear" in output
+        
+        # Test that it doesn't affect file handlers
+        # Save the current file handler level
+        file_handler = None
+        for handler in logger.handlers:
+            if isinstance(handler, MultiProcessingLog):
+                file_handler = handler
+                original_level = handler.level
+                break
+        
+        # Clear output for next test
+        test_stdout.clear()
+        
+        # Set a more restrictive level
+        logger.level = logging.ERROR
+        
+        # Verify file handler level is unchanged
+        if file_handler:
+            assert file_handler.level == original_level, "File handler level should not change"
+        
+        # Log messages
+        logger.warning("Warning should not appear")
+        logger.error("Error should appear")
+        
+        # Force flush handlers
+        for handler in logger.logger.handlers:
+            if hasattr(handler, 'flush'):
+                handler.flush()
+        
+        # Check output
+        output = test_stdout.getvalue()
+        assert "Warning should not appear" not in output
+        assert "Error should appear" in output
+
+    def test_level_setter_affects_only_console_handlers(self):
+        """Test that level setter only affects console handlers, not file or critical handlers."""
+        # Create a logger
+        logger = get_logger("test_level_setter_handlers", "INFO")
+        
+        # Count handlers by type before update
+        console_handlers = []
+        file_handlers = []
+        critical_handlers = []
+        
+        for handler in logger.handlers:
+            if isinstance(handler, logging.StreamHandler) and not isinstance(handler, CriticalExitHandler):
+                console_handlers.append(handler)
+            elif isinstance(handler, MultiProcessingLog):
+                file_handlers.append(handler)
+            elif isinstance(handler, CriticalExitHandler):
+                critical_handlers.append(handler)
+        
+        # Record original levels
+        original_console_levels = [h.level for h in console_handlers]
+        original_file_levels = [h.level for h in file_handlers]
+        original_critical_levels = [h.level for h in critical_handlers]
+        
+        # Change the level
+        logger.level = logging.WARNING
+        
+        # Verify console handlers changed
+        for i, handler in enumerate(console_handlers):
+            assert handler.level == logging.WARNING, "Console handler level should be updated"
+            assert handler.level != original_console_levels[i], "Console handler level should have changed"
+        
+        # Verify file handlers didn't change
+        for i, handler in enumerate(file_handlers):
+            assert handler.level == original_file_levels[i], "File handler level should not change"
+        
+        # Verify critical handlers didn't change
+        for i, handler in enumerate(critical_handlers):
+            assert handler.level == original_critical_levels[i], "Critical handler level should not change"

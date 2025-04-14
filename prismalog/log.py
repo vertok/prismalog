@@ -626,18 +626,53 @@ def get_logger(name: str, verbose: Optional[str] = None) -> ColoredLogger:
 
     # Check if logger already exists
     if name in ColoredLogger._initialized_loggers:
+        existing_logger = ColoredLogger._initialized_loggers[name]
+
+        # If explicit verbose parameter is provided, always apply it
+        if verbose is not None:
+            original_level = existing_logger.level
+            ColoredLogger.update_logger_level(name, verbose)
+            if original_level != existing_logger.level:
+                LoggingConfig._debug_print(
+                    f"Warning: Logger '{name}' level changed from "
+                    f"{logging.getLevelName(original_level)} to {logging.getLevelName(existing_logger.level)} "
+                    f"due to explicit parameter")
+            return existing_logger
+
         # Check if there's a specific config for this logger in external_loggers
         external_loggers = LoggingConfig.get("external_loggers", {})
-        if name in external_loggers and verbose is None:
-            # Update the existing logger with the configured level
+        if name in external_loggers:
+            original_level = existing_logger.level
             ColoredLogger.update_logger_level(name, external_loggers[name])
-        return ColoredLogger._initialized_loggers[name]
+            if original_level != existing_logger.level:
+                LoggingConfig._debug_print(
+                    f"Warning: Logger '{name}' level changed from "
+                    f"{logging.getLevelName(original_level)} to {logging.getLevelName(existing_logger.level)} "
+                    f"due to external_loggers configuration")
+            return existing_logger
 
-    # Use explicit level, then check external_loggers config, then use default
+        # Check if there's a module-specific level that should be applied
+        module_levels = LoggingConfig.get("module_levels", {})
+        if name in module_levels:
+            original_level = existing_logger.level
+            ColoredLogger.update_logger_level(name, module_levels[name])
+            if original_level != existing_logger.level:
+                LoggingConfig._debug_print(
+                    f"Warning: Logger '{name}' level changed from "
+                    f"{logging.getLevelName(original_level)} to {logging.getLevelName(existing_logger.level)} "
+                    f"due to module_levels configuration")
+
+        return existing_logger
+
+    # Use explicit level, then check external_loggers config, then check module_levels, then use default
     if verbose is None:
         external_loggers = LoggingConfig.get("external_loggers", {})
+        module_levels = LoggingConfig.get("module_levels", {})
+
         if name in external_loggers:
             verbose = external_loggers[name]
+        elif name in module_levels:
+            verbose = module_levels[name]
         else:
             verbose = LoggingConfig.get("default_level", "INFO")
 

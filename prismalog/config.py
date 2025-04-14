@@ -329,23 +329,24 @@ class LoggingConfig:
         """
         Get a specific configuration value.
 
-        If the configuration hasn't been initialized yet, this will
-        initialize it with default values before returning.
-
         Args:
             key: The configuration key to retrieve
             default: Value to return if the key is not found
 
         Returns:
             The configuration value or the default if not found
-
-        Example:
-            ```python
-            log_dir = LoggingConfig.get("log_dir", "default_logs")
-            ```
         """
         if not cls._initialized:
             cls.initialize()
+
+        # Special handling for nested keys
+        if key == "module_levels":
+            # Return the module_levels dictionary if it exists
+            if "module_levels" in cls._config and isinstance(cls._config["module_levels"], dict):
+                return cls._config["module_levels"]
+            return {}
+
+        # Normal key
         return cls._config.get(key, default)
 
     @classmethod
@@ -356,6 +357,8 @@ class LoggingConfig:
         This allows runtime modification of configuration values. Changes
         will be reflected in any new loggers created after the change.
 
+        Supports nested keys with dot notation (e.g., "module_levels.my_module").
+
         Args:
             key: The configuration key to set
             value: The value to assign to the key
@@ -364,9 +367,30 @@ class LoggingConfig:
             ```python
             # Disable exiting on critical logs
             LoggingConfig.set("exit_on_critical", False)
+
+            # Set module-specific log level
+            LoggingConfig.set("module_levels.my_module", "DEBUG")
             ```
         """
-        cls._config[key] = value
+        # Handle nested keys (with dot notation)
+        if '.' in key:
+            # Split the key path
+            parts = key.split('.')
+            main_key = parts[0]
+            sub_key = parts[1]
+
+            # Ensure parent dictionary exists
+            if main_key not in cls._config:
+                cls._config[main_key] = {}
+            elif not isinstance(cls._config[main_key], dict):
+                # If it exists but is not a dict, convert it to a dict
+                cls._config[main_key] = {}
+
+            # Set the value in the nested dict
+            cls._config[main_key][sub_key] = value
+        else:
+            # Simple case: direct key
+            cls._config[key] = value
 
     @classmethod
     def get_level(cls, name: Optional[str] = None, default_level: Optional[str] = None) -> int:
