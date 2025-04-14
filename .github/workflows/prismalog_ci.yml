@@ -31,11 +31,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Step 3: Install dependencies
+      # Step 3: Install dependencies (Add sphinx and theme)
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip wheel setuptools
-          pip install -e ".[dev]"
+          # Add sphinx and a theme (e.g., sphinx-rtd-theme)
+          pip install -e ".[dev]" sphinx sphinx-rtd-theme
           pip install pytest-cov pytest-html pylint black flake8 anybadge
 
       # Step 4: Run unit tests with coverage
@@ -135,7 +136,16 @@ jobs:
           "
           echo "## GitHub Secrets Integration: Passed" >> $GITHUB_STEP_SUMMARY
 
-      # Step 13: Generate HTML report index
+      # Step 13: Generate API Documentation (Only on Python 3.10)
+      - name: Generate API Documentation
+        if: matrix.python-version == '3.10'
+        run: |
+          # Change into the docs directory and run make html
+          cd docs
+          make html
+          # The output will be in docs/build/html
+
+      # Step 14: Generate HTML report index
       - name: Generate HTML report index
         run: |
           cat > reports/html/index.html << 'EOF'
@@ -224,7 +234,7 @@ jobs:
           </html>
           EOF
 
-      # Step 14: Upload test reports and artifacts
+      # Step 15: Upload test reports and artifacts
       - name: Upload test reports
         uses: actions/upload-artifact@v4
         if: always()
@@ -236,7 +246,16 @@ jobs:
             htmlcov/
             coverage.xml
 
-      # Step 15, 16, 17: Upload badges per Python version
+      # Step 16: Upload Documentation Artifact (Only on Python 3.11)
+      - name: Upload Documentation Artifact
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          # Update path to match Makefile output
+          path: docs/build/html
+
+      # Step 17: Upload Python 3.8 badges
       - name: Upload Python 3.8 badges
         uses: actions/upload-artifact@v4
         if: matrix.python-version == '3.8'
@@ -244,6 +263,7 @@ jobs:
           name: badges-py3.8-${{ github.sha }}
           path: reports/badges/
 
+      # Step 18: Upload Python 3.10 badges
       - name: Upload Python 3.10 badges
         uses: actions/upload-artifact@v4
         if: matrix.python-version == '3.10'
@@ -251,6 +271,7 @@ jobs:
           name: badges-py3.10-${{ github.sha }}
           path: reports/badges/
 
+      # Step 19: Upload Python 3.11 badges
       - name: Upload Python 3.11 badges
         uses: actions/upload-artifact@v4
         if: matrix.python-version == '3.11'
@@ -258,13 +279,13 @@ jobs:
           name: badges-py3.11-${{ github.sha }}
           path: reports/badges/
 
-      # Step 18: Build the package for distribution
+      # Step 20: Build the package for distribution
       - name: Build package
         run: |
           pip install build
           python -m build
 
-      # Step 19: Store build artifacts
+      # Step 21: Store build artifacts
       - name: Store build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -437,6 +458,9 @@ jobs:
             </html>
           EOF
           done
+
+      - name: Copy README to site directory
+        run: cp README.md site/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

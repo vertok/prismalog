@@ -2,12 +2,14 @@
 
 A robust, multi-process safe logging system for Python applications that integrates perfectly with the psy-supabase package.
 
-[![Documentation Status](https://readthedocs.org/projects/prismalog/badge/?version=latest)](https://prismalog.readthedocs.io/en/latest/?badge=latest)
-[![PyLint](https://img.shields.io/badge/PyLint-10.0/10-brightgreen)](https://github.com/vertok/prismalog)
-[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen)](https://github.com/vertok/prismalog)
-[![Python Versions](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
-[![PyPI version](https://badge.fury.io/py/prismalog.svg)](https://badge.fury.io/py/prismalog)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/prismalog)](https://pypi.org/project/prismalog/)
+[![PyPI version](https://img.shields.io/pypi/v/prismalog.svg)](https://pypi.org/project/prismalog/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/prismalog.svg)](https://pypi.org/project/prismalog/)
+[![Coverage Python 3.8](https://vertok.github.io/prismalog/badges/coverage-py3.8.svg)](https://vertok.github.io/prismalog/htmlcov/index.html)
+[![Pylint Python 3.8](https://vertok.github.io/prismalog/badges/pylint-py3.8.svg)](https://vertok.github.io/prismalog/reports/html/3.8/index.html)
+[![Coverage Python 3.10](https://vertok.github.io/prismalog/badges/coverage-py3.10.svg)](https://vertok.github.io/prismalog/htmlcov/index.html)
+[![Pylint Python 3.10](https://vertok.github.io/prismalog/badges/pylint-py3.10.svg)](https://vertok.github.io/prismalog/reports/html/3.10/index.html)
+[![Coverage Python 3.11](https://vertok.github.io/prismalog/badges/coverage-py3.11.svg)](https://vertok.github.io/prismalog/htmlcov/index.html)
+[![Pylint Python 3.11](https://vertok.github.io/prismalog/badges/pylint-py3.11.svg)](https://vertok.github.io/prismalog/reports/html/3.11/index.html)
 
 ## Features
 
