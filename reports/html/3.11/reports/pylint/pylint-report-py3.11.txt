@@ -20,9 +20,7 @@ prismalog/log.py:872:26: W0212: Access to a protected member _initialized_logger
 ************* Module prismalog.config
 prismalog/config.py:372:15: W0718: Catching too general exception Exception (broad-exception-caught)
 prismalog/config.py:361:24: C0415: Import outside toplevel (yaml) (import-outside-toplevel)
-prismalog/config.py:365:30: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
-prismalog/config.py:366:30: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
 
 -----------------------------------
-Your code has been rated at 9.63/10
+Your code has been rated at 9.67/10
 
