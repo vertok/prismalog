@@ -25,6 +25,8 @@ keywords = ["logging", "colored", "high-performance", "multiprocessing"]
 
 [project.optional-dependencies]
 # Development tools for code quality, formatting, etc.
+yaml = ["PyYAML>=6.0.1"]     # Only the YAML dependency for using yaml configs
+
 dev = [
     "black>=22.6.0",         # Code formatting
     "pylint>=2.14.0",        # Linting
