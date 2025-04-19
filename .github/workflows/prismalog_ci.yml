@@ -384,14 +384,29 @@ jobs:
       - name: Download coverage HTML
         uses: actions/download-artifact@v4
         with:
-          pattern: test-reports-*
+          name: test-reports-3.10  # Use a specific Python version that always runs tests
           path: site/temp
-          merge-multiple: true
+        continue-on-error: true
 
       - name: Move coverage HTML
         run: |
           if [ -d "site/temp/htmlcov" ]; then
+            mkdir -p site/htmlcov
             cp -r site/temp/htmlcov/* site/htmlcov/
+          elif [ -d "site/temp" ]; then
+            # Debug info
+            echo "Contents of site/temp:"
+            find site/temp -type d | sort
+
+            # Try alternative locations
+            if [ -d "site/temp/reports/html/htmlcov" ]; then
+              mkdir -p site/htmlcov
+              cp -r site/temp/reports/html/htmlcov/* site/htmlcov/
+            fi
+          else
+            echo "No coverage HTML found in downloaded artifacts"
+            mkdir -p site/htmlcov
+            echo "<html><body><h1>Coverage report not available</h1></body></html>" > site/htmlcov/index.html
           fi
 
       # Create a consolidated index page that links to all version-specific reports
