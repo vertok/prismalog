@@ -79,12 +79,38 @@ jobs:
         run: |
           mkdir -p reports/badges
           COVERAGE="0.0"
-          [ -f coverage.xml ] && COVERAGE=$(python -c "import xml.etree.ElementTree as ET; print(ET.parse('coverage.xml').getroot().attrib.get('line-rate', '0.0'))")
-          COVERAGE_PCT=$(python -c "print(round(float('$COVERAGE') * 100, 2))")
+          
+          # Check if coverage.xml exists and extract the line-rate properly
+          if [ -f coverage.xml ]; then
+            # Extract coverage data more reliably
+            COVERAGE=$(python -c "import xml.etree.ElementTree as ET; root = ET.parse('coverage.xml').getroot(); print(root.get('line-rate', '0.0'))")
+            echo "Found raw coverage value: $COVERAGE"
+            
+            # Verify the extracted data
+            if [[ ! $COVERAGE =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+              echo "Warning: Invalid coverage data extracted, using default"
+              COVERAGE="0.0"
+            fi
+          else
+            echo "Warning: coverage.xml file not found"
+          fi
+          
+          # Calculate percentage
+          COVERAGE_PCT=$(python -c "print(round(float('$COVERAGE') * 100, 1))")
+          echo "Calculated coverage percentage: $COVERAGE_PCT%"
+          
+          # Determine color
           COLOR=$(python -c "c=float('$COVERAGE_PCT'); print('red' if c < 50 else 'yellow' if c < 80 else 'green')")
+          
+          # Store in environment and summary
           echo "COVERAGE_PCT=$COVERAGE_PCT" >> $GITHUB_ENV
           echo "## Test Coverage: $COVERAGE_PCT%" >> $GITHUB_STEP_SUMMARY
+          
+          # Generate badge
           anybadge --label="coverage-py${{ matrix.python-version }}" --value=$COVERAGE_PCT --file=reports/badges/coverage-py${{ matrix.python-version }}.svg --suffix=% 50=red 60=orange 80=yellow 100=green
+          
+          # Verify badge was created
+          ls -la reports/badges/
 
       # Step 9: Run pylint and generate badge
       - name: Run pylint
