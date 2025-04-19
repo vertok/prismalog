@@ -8,10 +8,10 @@ Basic Usage
 
 .. code-block:: python
 
-   from prismalog import setup_logging, get_logger
+   from prismalog.log import LoggingConfig, get_logger
 
    # Initialize logging
-   setup_logging()
+   LoggingConfig.initialize()
 
    # Create a logger
    logger = get_logger(__name__)

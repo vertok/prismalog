@@ -74,10 +74,10 @@ Any application using prismalog automatically supports these command-line argume
 ## Usage
 
 ```python
-from prismalog import get_logger, setup_logging
+from prismalog.log import get_logger, LoggingConfig
 
 # Initialize logging (with command-line support)
-setup_logging()
+LoggingConfig.initialize(use_cli_args=True)
 
 # Get logger and use it
 logger = get_logger("my_app")

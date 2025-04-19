@@ -113,7 +113,7 @@ Multi-process Logging
 .. code-block:: python
 
    import multiprocessing
-   from prismalog import setup_logging, get_logger
+   from prismalog.log import LoggingConfig, get_logger
 
    def worker_process(name):
        # Each process gets its own logger
@@ -124,7 +124,7 @@ Multi-process Logging
 
    if __name__ == "__main__":
        # Initialize logging before creating processes
-       setup_logging()
+       LoggingConfig.initialize(use_cli_args=True)
        logger = get_logger("main")
 
        processes = []
