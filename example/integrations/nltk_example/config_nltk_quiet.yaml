@@ -1,9 +1,11 @@
 # Quiet config (with silencing for noisy libraries)
 log_dir: ./logs
-default_level: INFO
+default_level: debug
 rotation_size_mb: 5
 backup_count: 3
 colored_console: true
+exit_on_critical: false
+
 
 # External loggers configuration - silence noisy libraries
 external_loggers:

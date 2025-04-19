@@ -21,12 +21,15 @@ Usage:
 You can adjust the number of iterations by modifying the parameter
 in the __main__ block at the bottom of this file.
 """
+
 import os
 import time
 from datetime import datetime
+
 from prismalog.log import ColoredLogger, get_logger
 
-def log_sequence_test(iterations=100):
+
+def log_sequence_test(iterations: int = 100) -> None:
     """
     Test if consecutive logging with different log levels works consistently.
 
@@ -39,13 +42,19 @@ def log_sequence_test(iterations=100):
     print(f"• Testing {iterations} iterations of sequential log levels")
 
     # Disable rotation for this test
-    os.environ['LOG_DISABLE_ROTATION'] = '1'
+    os.environ["LOG_DISABLE_ROTATION"] = "1"
 
     # Create a fresh logger and log file
     ColoredLogger.reset(new_file=True)
     log_file = ColoredLogger._log_file_path
     print(f"• Using log file: {log_file}")
 
+    # Check if log file exists and is valid
+    if log_file is None:
+        print("Error: No log file was created")
+        return
+
+    # Now the code can safely use log_file since we've verified it's not None
     logger = get_logger("sequence_test", verbose="DEBUG")
 
     print("\nRunning sequence test...")
@@ -68,9 +77,9 @@ def log_sequence_test(iterations=100):
 
     # Verify log file contents
     print("\nVerifying log file...")
-    with open(log_file, mode='r', encoding='utf-8') as f:
+    with open(log_file, mode="r", encoding="utf-8") as f:
         log_content = f.read()
-        log_lines = log_content.strip().split('\n')
+        log_lines = log_content.strip().split("\n")
         total_lines = len(log_lines)
 
     print(f"• Total log lines: {total_lines}")
@@ -94,9 +103,9 @@ def log_sequence_test(iterations=100):
             break
 
         has_debug = "[DEBUG]" in log_lines[check_idx]
-        has_info = "[INFO]" in log_lines[check_idx+1]
-        has_warning = "[WARNING]" in log_lines[check_idx+2]
-        has_error = "[ERROR]" in log_lines[check_idx+3]
+        has_info = "[INFO]" in log_lines[check_idx + 1]
+        has_warning = "[WARNING]" in log_lines[check_idx + 2]
+        has_error = "[ERROR]" in log_lines[check_idx + 3]
 
         sequence_ok = all([has_debug, has_info, has_warning, has_error])
         if not sequence_ok:
@@ -114,7 +123,7 @@ def log_sequence_test(iterations=100):
     print("\nChecking for specific message patterns...")
 
     # Check some random iterations
-    check_iterations = [0, iterations//2, iterations-1]
+    check_iterations = [0, iterations // 2, iterations - 1]
     for i in check_iterations:
         debug_msg = f"[{i}] DEBUG level message"
         info_msg = f"[{i}] INFO level message"
@@ -130,10 +139,14 @@ def log_sequence_test(iterations=100):
             print(f"✅ Iteration {i}: All message types found")
         else:
             print(f"❌ Iteration {i}: Missing message types")
-            if not has_debug:   print("  - Missing DEBUG message")    # pylint: disable=multiple-statements
-            if not has_info:    print("  - Missing INFO message")     # pylint: disable=multiple-statements
-            if not has_warning: print("  - Missing WARNING message")  # pylint: disable=multiple-statements
-            if not has_error:   print("  - Missing ERROR message")    # pylint: disable=multiple-statements
+            if not has_debug:
+                print("  - Missing DEBUG message")  # pylint: disable=multiple-statements
+            if not has_info:
+                print("  - Missing INFO message")  # pylint: disable=multiple-statements
+            if not has_warning:
+                print("  - Missing WARNING message")  # pylint: disable=multiple-statements
+            if not has_error:
+                print("  - Missing ERROR message")  # pylint: disable=multiple-statements
 
     print(f"\n{'='*60}")
     print("TEST COMPLETED")
@@ -141,6 +154,7 @@ def log_sequence_test(iterations=100):
     print("Open the log file to inspect it manually:")
     print(f"{log_file}")
     print(f"{'='*60}\n")
+
 
 if __name__ == "__main__":
     # Adjust the number of iterations here.

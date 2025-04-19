@@ -1,3 +1,17 @@
+.. prismalog documentation master file
+
+Welcome to prismalog's documentation!
+=====================================
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   installation
+   usage
+   api/index
+   examples
+
 .. _prismalog-documentation:
 
 prismalog Documentation
@@ -50,15 +64,6 @@ Key Features
         :img-top: _static/quiet.png
 
         Silence noisy third-party libraries with simple configuration
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   installation
-   usage
-   examples
-   api/index
 
 Indices and tables
 ==================

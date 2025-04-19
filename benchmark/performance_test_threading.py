@@ -13,50 +13,71 @@ It runs multiple threads that log messages concurrently and collects
 detailed statistics about performance characteristics.
 """
 
-import os
 import gc
-import time
-import psutil
-import threading
+import os
 import statistics
-from queue import Queue
+import threading
+import time
 from datetime import datetime
-from prismalog.log import ColoredLogger, get_logger
+from queue import Queue
+from typing import Any, Callable, Dict, List, Tuple
 
-# Disable rotation for performance tests to avoid timing variations
-os.environ['LOG_DISABLE_ROTATION'] = '1'
+from prismalog.argparser import extract_logging_args, get_argument_parser
+from prismalog.log import ColoredLogger, LoggingConfig, get_logger
 
-def get_memory_usage():
+# Create parser with standard logging arguments
+parser = get_argument_parser(description="prismalog Multiprocessing Performance Test")
+
+# Parse arguments
+args = parser.parse_args()
+
+# Extract logging arguments and add benchmark-specific settings
+logging_args = extract_logging_args(args)
+logging_args.update(
+    {"colored_console": True, "test_mode": False, "disable_rotation": True}  # Disable rotation for performance tests
+)
+
+# Initialize logging configuration
+LoggingConfig.initialize(use_cli_args=True, **logging_args)
+
+
+def get_memory_usage() -> float:
     """
-    Get current memory usage of the process.
+    Get current memory usage of the process using standard Python.
 
     Returns:
         float: Current memory usage in megabytes.
     """
-    process = psutil.Process(os.getpid())
-    return process.memory_info().rss / (1024 * 1024)
+    import resource
+
+    # Get maximum resident set size (in bytes on Linux)
+    rusage = resource.getrusage(resource.RUSAGE_SELF)
+    # Convert to megabytes
+    return rusage.ru_maxrss / 1024  # ru_maxrss is in KB on Linux
 
 
-def measure_time(func):
+def measure_time(func: Callable[..., Any]) -> Callable[..., Tuple[Any, float]]:
     """
     Decorator to measure function execution time.
 
     Args:
-        func (callable): The function to measure.
+        func: The function to measure.
 
     Returns:
-        callable: A wrapper function that returns the original result and elapsed time.
+        A wrapper function that returns the original result and elapsed time.
     """
-    def wrapper(*args, **kwargs):
+
+    def wrapper(*args: Any, **kwargs: Any) -> Tuple[Any, float]:
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
         elapsed = end_time - start_time
         return result, elapsed
+
     return wrapper
 
 
-def worker_thread(thread_id, num_messages, result_queue, batch_size=100):
+def worker_thread(thread_id: int, num_messages: int, result_queue: Queue, batch_size: int = 100) -> None:
     """
     Worker thread that generates log messages and reports detailed metrics.
 
@@ -78,12 +99,7 @@ def worker_thread(thread_id, num_messages, result_queue, batch_size=100):
         logger.debug("Warm-up message")
 
     # Track timing metrics
-    timings = {
-        'debug': [],
-        'info': [],
-        'warning': [],
-        'error': []
-    }
+    timings: Dict[str, List[float]] = {"debug": [], "info": [], "warning": [], "error": []}
 
     # Track memory usage (note: this is process-wide, not thread-specific)
     start_memory = get_memory_usage()
@@ -102,7 +118,7 @@ def worker_thread(thread_id, num_messages, result_queue, batch_size=100):
         end = time.time()
 
         batch_time = end - start
-        timings['debug'].append(batch_time / batch_size_actual)
+        timings["debug"].append(batch_time / batch_size_actual)
 
     # Log info messages
     for batch_start in range(0, num_messages, batch_size):
@@ -115,7 +131,7 @@ def worker_thread(thread_id, num_messages, result_queue, batch_size=100):
         end = time.time()
 
         batch_time = end - start
-        timings['info'].append(batch_time / batch_size_actual)
+        timings["info"].append(batch_time / batch_size_actual)
 
     # Log warning messages
     for batch_start in range(0, num_messages, batch_size):
@@ -128,7 +144,7 @@ def worker_thread(thread_id, num_messages, result_queue, batch_size=100):
         end = time.time()
 
         batch_time = end - start
-        timings['warning'].append(batch_time / batch_size_actual)
+        timings["warning"].append(batch_time / batch_size_actual)
 
     # Log error messages (fewer to avoid cluttering logs)
     error_count = max(10, num_messages // 10)
@@ -142,23 +158,25 @@ def worker_thread(thread_id, num_messages, result_queue, batch_size=100):
         end = time.time()
 
         batch_time = end - start
-        timings['error'].append(batch_time / batch_size_actual)
+        timings["error"].append(batch_time / batch_size_actual)
 
     # Calculate overall metrics
     worker_duration = time.time() - worker_start_time
     end_memory = get_memory_usage()
 
     # Send results back to main thread
-    result_queue.put({
-        'thread_id': thread_id,
-        'duration': worker_duration,
-        'message_count': num_messages * 3 + error_count,  # debug + info + warning + error
-        'timings': timings,
-        'memory_delta': end_memory - start_memory
-    })
+    result_queue.put(
+        {
+            "thread_id": thread_id,
+            "duration": worker_duration,
+            "message_count": num_messages * 3 + error_count,  # debug + info + warning + error
+            "timings": timings,
+            "memory_delta": end_memory - start_memory,
+        }
+    )
 
 
-def format_statistics(values):
+def format_statistics(values: list) -> str:
     """
     Format statistical values for display.
 
@@ -184,7 +202,7 @@ def format_statistics(values):
         return f"mean={mean*1000:.2f}ms, median={median*1000:.2f}ms"
 
 
-def main():
+def main() -> None:
     """
     Main function to run the multithreaded performance test.
 
@@ -199,7 +217,7 @@ def main():
     """
     # Configuration - use the same parameters as the multiprocessing test
     NUM_THREADS = 4
-    MESSAGES_PER_THREAD = 1000
+    MESSAGES_PER_THREAD = 1200
     BATCH_SIZE = 100
 
     # Prepare benchmark directory and results file
@@ -229,19 +247,20 @@ def main():
     log_file = ColoredLogger._log_file_path
     print(f"Log file: {log_file}")
 
-    initial_log_files = len([f for f in os.listdir(os.path.dirname(log_file))
-                           if f.startswith(os.path.basename(log_file).split('.')[0])])
+    if log_file is not None:
+        initial_log_files = len(
+            [f for f in os.listdir(os.path.dirname(log_file)) if f.startswith(os.path.basename(log_file).split(".")[0])]
+        )
+    else:
+        initial_log_files = 0
 
     print("\nStarting worker threads...")
     threads = []
-    result_queue = Queue()
+    result_queue: Queue = Queue()
 
     # Start worker threads
     for i in range(NUM_THREADS):
-        t = threading.Thread(
-            target=worker_thread,
-            args=(i, MESSAGES_PER_THREAD, result_queue, BATCH_SIZE)
-        )
+        t = threading.Thread(target=worker_thread, args=(i, MESSAGES_PER_THREAD, result_queue, BATCH_SIZE))
         threads.append(t)
         t.start()
         print(f"• Started worker {i+1}/{NUM_THREADS} (Thread ID: {t.ident})")
@@ -256,32 +275,34 @@ def main():
 
     # Calculate aggregate statistics
     total_duration = time.time() - test_start
-    total_messages = sum(r['message_count'] for r in results)
+    total_messages = sum(r["message_count"] for r in results)
 
     # Aggregate timing data
-    all_timings = {
-        'debug': [],
-        'info': [],
-        'warning': [],
-        'error': []
-    }
+    all_timings: Dict[str, List[float]] = {"debug": [], "info": [], "warning": [], "error": []}
 
     for r in results:
-        for level, timings in r['timings'].items():
+        for level, timings in r["timings"].items():
             all_timings[level].extend(timings)
 
     # Measure log file size
-    try:
-        log_size = os.path.getsize(log_file) / (1024 * 1024)  # MB
-    except:
+    if log_file is not None:
+        try:
+            log_size = os.path.getsize(log_file) / (1024 * 1024)  # MB
+        except:
+            log_size = 0
+    else:
         log_size = 0
 
     # Final memory usage
     gc.collect()
     final_memory = get_memory_usage()
 
-    final_log_files = len([f for f in os.listdir(os.path.dirname(log_file))
-                         if f.startswith(os.path.basename(log_file).split('.')[0])])
+    if log_file is not None:
+        final_log_files = len(
+            [f for f in os.listdir(os.path.dirname(log_file)) if f.startswith(os.path.basename(log_file).split(".")[0])]
+        )
+    else:
+        final_log_files = 0
     print(f"• Log files created: {final_log_files - initial_log_files}")
 
     # Print results
@@ -331,37 +352,28 @@ def main():
 
     # Save structured results to the benchmark directory
     import json
+
     benchmark_results = {
         "date": datetime.now().isoformat(),
-        "config": {
-            "threads": NUM_THREADS,
-            "messages_per_thread": MESSAGES_PER_THREAD,
-            "batch_size": BATCH_SIZE
-        },
+        "config": {"threads": NUM_THREADS, "messages_per_thread": MESSAGES_PER_THREAD, "batch_size": BATCH_SIZE},
         "throughput": {
             "total_messages": total_messages,
             "total_duration": total_duration,
-            "messages_per_second": total_messages/total_duration
+            "messages_per_second": total_messages / total_duration,
         },
         "timing": {
             "debug": {
-                "mean": statistics.mean(all_timings['debug']) * 1000,
-                "median": statistics.median(all_timings['debug']) * 1000,
-                "stdev": statistics.stdev(all_timings['debug']) * 1000 if len(all_timings['debug']) > 1 else 0
+                "mean": statistics.mean(all_timings["debug"]) * 1000,
+                "median": statistics.median(all_timings["debug"]) * 1000,
+                "stdev": statistics.stdev(all_timings["debug"]) * 1000 if len(all_timings["debug"]) > 1 else 0,
             },
             # Similar entries for other log levels
         },
-        "memory": {
-            "initial": initial_memory,
-            "final": final_memory,
-            "delta": final_memory - initial_memory
-        },
-        "log_file": {
-            "size_mb": log_size
-        }
+        "memory": {"initial": initial_memory, "final": final_memory, "delta": final_memory - initial_memory},
+        "log_file": {"size_mb": log_size},
     }
 
-    with open(results_file, 'w') as f:
+    with open(results_file, "w") as f:
         json.dump(benchmark_results, f, indent=2)
 
     print(f"Benchmark results saved to: {results_file}")

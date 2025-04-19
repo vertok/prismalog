@@ -1,12 +1,16 @@
 """Stress tests for prismalog under extreme conditions."""
 
-import unittest
-import tempfile
 import os
 import shutil
-import time
+import tempfile
 import threading
-from prismalog import get_logger, LoggingConfig
+import time
+import unittest
+
+import pytest
+
+from prismalog import LoggingConfig, get_logger
+
 
 class TestStressCases(unittest.TestCase):
     """Test the logging system under extreme stress conditions."""
@@ -20,11 +24,9 @@ class TestStressCases(unittest.TestCase):
 
     def test_flood_logging(self):
         """Test the logger under flooding conditions."""
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "colored_console": False,
-            "rotation_size_mb": 10
-        })
+        LoggingConfig.initialize(
+            use_cli_args=False, **{"log_dir": self.temp_dir, "colored_console": False, "rotation_size_mb": 10}
+        )
 
         logger = get_logger("flood_test")
 
@@ -55,10 +57,7 @@ class TestStressCases(unittest.TestCase):
 
     def test_bursty_logging(self):
         """Test with many threads doing bursty logging."""
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "colored_console": False
-        })
+        LoggingConfig.initialize(use_cli_args=False, **{"log_dir": self.temp_dir, "colored_console": False})
 
         logger = get_logger("bursty_test")
 
@@ -71,8 +70,7 @@ class TestStressCases(unittest.TestCase):
 
         # Start all threads
         for i in range(num_threads):
-            t = threading.Thread(target=self.bursty_thread,
-                                args=(i, bursts_per_thread, logger))
+            t = threading.Thread(target=self.bursty_thread, args=(i, bursts_per_thread, logger))
             threads.append(t)
             t.start()
 
@@ -90,15 +88,13 @@ class TestStressCases(unittest.TestCase):
         # Success criteria is not crashing under bursty load
         self.assertTrue(True)
 
+    @pytest.mark.slow
     def test_long_running(self):
         """Test logger running for a longer period with continuous activity."""
-        if os.environ.get('SKIP_LONG_TESTS'):
+        if os.environ.get("SKIP_LONG_TESTS"):
             self.skipTest("Skipping long-running test")
 
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "colored_console": False
-        })
+        LoggingConfig.initialize(use_cli_args=False, **{"log_dir": self.temp_dir, "colored_console": False})
 
         logger = get_logger("long_running_test")
 
@@ -124,5 +120,4 @@ class TestStressCases(unittest.TestCase):
         # Success criteria is maintaining performance over time
         recent_performance = msgs_per_sec
 
-        self.assertTrue(recent_performance > 1000,
-                      f"Performance degraded over time: {recent_performance:.2f} msgs/sec")
+        self.assertTrue(recent_performance > 1000, f"Performance degraded over time: {recent_performance:.2f} msgs/sec")

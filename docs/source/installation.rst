@@ -3,30 +3,102 @@
 Installation
 ============
 
-Basic Installation
-------------------
+From Source
+-----------
+
+1. Clone the repository:
+
+   .. code-block:: bash
+
+       git clone https://github.com/vertok/prismalog.git
+       cd prismalog
+
+2. Create a virtual environment:
+
+   .. code-block:: bash
+
+       # For standard usage
+       python -m venv .venv
+
+       # For development
+       python -m venv .venv-dev
+
+       # For testing
+       python -m venv .venv-test
+
+       # For documentation
+       python -m venv .venv-doc
+
+3. Activate the virtual environment:
+
+   .. code-block:: bash
+
+       # Choose one based on your needs:
+       source .venv/bin/activate      # Standard usage
+       source .venv-dev/bin/activate  # Development
+       source .venv-test/bin/activate # Testing
+       source .venv-doc/bin/activate  # Documentation
+
+4. Install the package:
+
+   .. code-block:: bash
+
+       # Standard installation (zero dependencies)
+       pip install -e .
+
+       # Development installation (includes development tools)
+       pip install -e .[dev]
+
+       # Testing installation (includes testing frameworks)
+       pip install -e .[test]
+
+       # Documentation installation (includes doc generation tools)
+       pip install -e .[doc]
+
+       # Full installation (all dependencies)
+       pip install -e .[all]
+
+Usage
+-----
+
+Basic Configuration
+~~~~~~~~~~~~~~~~~~~
+
+Configure logging using command-line arguments:
 
 .. code-block:: bash
 
-   pip install prismalog
+    # Set log level
+    python your_script.py --log-level DEBUG
 
-With YAML Support
------------------
+    # Specify log directory
+    python your_script.py --log-dir /path/to/logs
 
-.. code-block:: bash
+    # Use configuration file
+    python your_script.py --log-config config.yaml
 
-   pip install prismalog[yaml]
+    # Disable exit on critical errors
+    python your_script.py --no-exit-on-critical
 
-With All Features
------------------
+    # Disable colored output
+    python your_script.py --no-color
 
-.. code-block:: bash
+Available Arguments
+~~~~~~~~~~~~~~~~~~~
 
-   pip install prismalog[all]
+--log-level LEVEL
+    Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    Default: INFO
 
-For Development
----------------
+--log-dir DIR
+    Specify directory for log files
+    Default: ./logs
 
-.. code-block:: bash
+--log-config FILE
+    Use YAML configuration file
 
-   pip install prismalog[dev]
+--no-exit-on-critical
+    Prevent program termination on critical errors
+
+--no-color
+    Disable colored console output

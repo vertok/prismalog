@@ -13,6 +13,8 @@ A robust, multi-process safe logging system for Python applications that integra
 
 ## Features
 
+- ⚛️ Zero-dependency core
+- 🚀 High performance
 - 🎨 Colored console output
 - 📁 Automatic log file rotation
 - 🔄 Multi-process safe logging
@@ -101,11 +103,11 @@ source source .venv/bin/activate
 # Basic installation - no external dependencies
 pip install -e .
 
-# With YAML support
-pip install prismalog[yaml]
-
-# With all optional features
-pip install prismalog[all]
+# With documentation support
+pip install prismalog[doc]
 
 # For development and testing
 pip install prismalog[dev]
+
+# With all optional features
+pip install prismalog[all]

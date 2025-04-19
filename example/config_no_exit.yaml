@@ -1,5 +1,5 @@
 # config.yaml
-log_dir: ./local-logs
+log_dir: ./logs/local-logs
 default_level: INFO
 rotation_size_mb: 5
 backup_count: 3

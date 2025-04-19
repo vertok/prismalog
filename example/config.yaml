@@ -1,11 +1,11 @@
 # config.yaml
 
 # Directory where log files will be stored
-log_dir: ./local-logs
+log_dir: ./logs/local-logs
 
 # Default logging level for application loggers
 # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
-default_level: INFO
+default_level: DEBUG
 
 # Maximum log file size in megabytes before rotation
 # When the file reaches this size, it will be renamed and a new file started

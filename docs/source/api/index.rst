@@ -8,3 +8,7 @@ API Reference
 
    log
    config
+   argparser
+
+Modules
+-------

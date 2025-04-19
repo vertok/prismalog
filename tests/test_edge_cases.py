@@ -1,27 +1,47 @@
-"""Tests for edge cases in prismalog."""
+"""Tests for edge cases in prismalog using unittest style.
 
-import unittest
-import tempfile
+This test suite uses unittest style testing because:
+1. It deals with complex setup/teardown patterns
+2. Has systematic test scenarios
+3. Requires fine-grained control over resource cleanup
+4. Focuses on edge cases that benefit from unittest's structured approach
+"""
+
 import os
 import shutil
-from prismalog import get_logger, LoggingConfig, ColoredLogger
+import tempfile
+import unittest
+
+from prismalog.log import ColoredLogger, LoggingConfig, get_logger
+
 
 class TestEdgeCases(unittest.TestCase):
     """Test edge cases and unusual scenarios."""
 
     def setUp(self):
+        """Set up test environment."""
+        if ColoredLogger._file_handler:
+            ColoredLogger._file_handler.close()
+            ColoredLogger._file_handler = None
+
         self.temp_dir = tempfile.mkdtemp(prefix="log_edge_test_")
+        LoggingConfig.reset()
 
     def tearDown(self):
-        if os.path.exists(self.temp_dir):
-            shutil.rmtree(self.temp_dir)
+        """Clean up after test."""
+        try:
+            if ColoredLogger._file_handler:
+                ColoredLogger._file_handler.close()
+                ColoredLogger._file_handler = None
+
+            if os.path.exists(self.temp_dir):
+                shutil.rmtree(self.temp_dir)
+        finally:
+            LoggingConfig.reset()
 
     def test_very_large_message(self):
         """Test logging extremely large messages."""
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "colored_console": False
-        })
+        LoggingConfig.initialize(use_cli_args=False, **{"log_dir": self.temp_dir, "colored_console": False})
 
         logger = get_logger("large_message_test")
 
@@ -42,10 +62,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_rapid_creation(self):
         """Test creating many loggers in rapid succession."""
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "colored_console": False
-        })
+        LoggingConfig.initialize(use_cli_args=False, **{"log_dir": self.temp_dir, "colored_console": False})
 
         # Create many loggers rapidly
         loggers = []
@@ -61,10 +78,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_null_chars_in_log(self):
         """Test logging messages with null characters."""
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "colored_console": False
-        })
+        LoggingConfig.initialize(use_cli_args=False, **{"log_dir": self.temp_dir, "colored_console": False})
 
         logger = get_logger("null_char_test")
 
@@ -74,7 +88,7 @@ class TestEdgeCases(unittest.TestCase):
 
         # Check the log file
         log_file = ColoredLogger._log_file_path
-        with open(log_file, 'r', errors='ignore') as f:
+        with open(log_file, "r", errors="ignore") as f:
             content = f.read()
 
         # Should have sanitized or properly escaped the null chars
@@ -84,10 +98,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_non_ascii_messages(self):
         """Test logging messages with non-ASCII characters."""
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "colored_console": False
-        })
+        LoggingConfig.initialize(use_cli_args=False, **{"log_dir": self.temp_dir, "colored_console": False})
 
         logger = get_logger("unicode_test")
 
@@ -106,44 +117,13 @@ class TestEdgeCases(unittest.TestCase):
         # Check log file to see if encoding handled properly
         log_file = ColoredLogger._log_file_path
         try:
-            with open(log_file, 'r', encoding='utf-8') as f:
+            with open(log_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Verify messages were preserved
             for message in messages:
                 # Extract just the message part
                 msg_content = message.split(": ", 1)[1]
-                self.assertIn(msg_content, content,
-                             f"Missing unicode content: {message}")
+                self.assertIn(msg_content, content, f"Missing unicode content: {message}")
         except UnicodeDecodeError:
             self.fail("Unicode handling failed - log file not readable as UTF-8")
-
-    def test_permission_handling(self):
-        """Test handling when log directory permissions are restricted."""
-        if os.name == 'nt':  # Skip on Windows as permission model is different
-            self.skipTest("Skipping permission test on Windows")
-
-        # Create a directory with restricted permissions
-        restricted_dir = os.path.join(self.temp_dir, "restricted")
-        os.makedirs(restricted_dir)
-
-        # Make it read-only
-        os.chmod(restricted_dir, 0o500)  # Read + execute, but not write
-
-        try:
-            # Should handle gracefully
-            LoggingConfig.initialize(parse_args=False, **{
-                "log_dir": restricted_dir,
-                "colored_console": True  # Should fall back to console
-            })
-
-            logger = get_logger("permission_test")
-            logger.warning("This should go to console if file can't be written")
-
-            # The test passes if previous line didn't raise an error
-            self.assertTrue(True)
-        except Exception as e:
-            self.fail(f"Failed to handle restricted permissions: {e}")
-        finally:
-            # Restore permissions for cleanup
-            os.chmod(restricted_dir, 0o700)

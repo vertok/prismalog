@@ -5,89 +5,73 @@ This script demonstrates the core features of the prismalog package,
 showcasing its flexible configuration options and logging capabilities.
 
 Key features demonstrated:
-1. Configuration via YAML file
+1. Command-line argument handling via prismalog.argparser
 2. Debug, info, warning, error, and critical log levels
 3. Automatic handling of critical messages with optional program termination
 4. Command-line configuration override
 
-The script outputs logs of various severity levels and demonstrates the
-'exit_on_critical' feature that can automatically terminate a program
-when a critical issue is detected. This behavior is configurable through
-the YAML configuration file.
-
-Two modes are demonstrated:
-- With exit_on_critical=True: Program terminates on critical messages
-- With exit_on_critical=False: Program continues executing after critical logs
-
 Usage:
-    # Run with default configuration:
+    # Run with default settings (INFO level):
     python example_script.py
+
+    # Run with debug level:
+    python example_script.py --log-level DEBUG
 
     # Run with custom configuration:
     python example_script.py --log-config path/to/config.yaml
 
-    # Run with configuration that disables termination on critical messages:
-    python example_script.py --log-config example/config_no_exit.yaml
+    # Run with critical messages allowed (no exit):
+    python example_script.py --no-exit-on-critical
 """
-import argparse
-import os
-from prismalog.log import get_logger, LoggingConfig
 
-def parse_args():
-    """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="prismalog Example Script")
+from prismalog.argparser import extract_logging_args, get_argument_parser
+from prismalog.log import LoggingConfig, get_logger
 
-    # Add logging configuration flag
-    parser.add_argument('--log-config', '--logging-conf',
-                       dest='config_file',
-                       default="example/config.yaml",
-                       help='Path to logging configuration file')
 
-    return parser.parse_args()
-
-def main():
+def main() -> None:
     """Main function demonstrating logging capabilities."""
-    # Parse command-line arguments
-    args = parse_args()
+    # Create parser with standard logging arguments
+    parser = get_argument_parser(description="prismalog Example")
 
-    # Initialize with configuration file
-    if args.config_file:
-        if os.path.exists(args.config_file):
-            LoggingConfig.initialize(config_file=args.config_file)
-            LoggingConfig._debug_print(f"Using logging configuration from: {args.config_file}")
-        else:
-            LoggingConfig._debug_print(f"Warning: Config file {args.config_file} not found. Using defaults.")
-            LoggingConfig.initialize()
-    else:
-        LoggingConfig.initialize(config_file="example/config.yaml")
-        LoggingConfig._debug_print("Using default configuration from example/config.yaml")
+    # Add your own arguments if needed
+    parser.add_argument("--demo-mode", action="store_true", help="Run in demo mode")
 
-    # Get exit_on_critical setting to inform user
-    exit_setting = LoggingConfig.get("exit_on_critical", True)
+    # Parse arguments
+    args = parser.parse_args()
+
+    # Extract logging arguments
+    logging_args = extract_logging_args(args)
+
+    # Initialize with extracted arguments
+    LoggingConfig.initialize(use_cli_args=True, **logging_args)
 
     # Create logger
     logger = get_logger("example")
 
-    # Example usage
-    logger.info(f"Current 'exit_on_critical' setting: {exit_setting}")
-    logger.info("This is using the configuration from the specified file")
-    logger.debug("Debug is enabled from the config")
+    # Example usage - show current settings
+    logger.info(f"Current log level: {logging_args.get('default_level', 'INFO')}")
+    logger.info(f"Exit on critical: {not logging_args.get('exit_on_critical', True)}")
+
+    # Demonstrate different log levels
     logger.debug("This is a debug message")
     logger.info("This is an info message")
     logger.warning("This is a warning message")
     logger.error("This is an error message")
 
     # Warn user about potential program termination
-    if exit_setting:
+    if logging_args.get("exit_on_critical", True):
         logger.warning("About to log a CRITICAL message which will terminate the program")
-        logger.warning("(To prevent termination, use a config with exit_on_critical: false)")
+        logger.warning("(Use --no-exit-on-critical to prevent termination)")
+    else:
+        logger.info("Program will continue after critical message")
 
     # This will terminate the program if exit_on_critical is true
-    logger.critical("This is a critical message. Program will terminate if exit_on_critical=True.")
+    logger.critical("This is a critical message")
 
     # These will only be reached if exit_on_critical is false
-    logger.info("Program continued after critical message (exit_on_critical=False)")
-    logger.error("This message shows the program didn't terminate")
+    logger.info("Program continued after critical message")
+    logger.info("This confirms exit_on_critical is disabled")
+
 
 if __name__ == "__main__":
     main()

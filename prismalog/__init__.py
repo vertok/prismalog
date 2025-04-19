@@ -2,11 +2,14 @@
 For more information, see the documentation at:
 https://github.com/vertok/prismalog
 """
-from .log import get_logger, ColoredLogger
-from .config import LoggingConfig
 
-# Simple function to initialize logging from command line
-def setup_logging(config_file=None, parse_args=True):
+from typing import Optional
+
+from .config import LoggingConfig
+from .log import ColoredLogger, CriticalExitHandler, get_logger
+
+
+def setup_logging(config_file: Optional[str] = None, use_cli_args: bool = True) -> dict:
     """
     Initialize logging with potential command-line arguments.
 
@@ -16,8 +19,16 @@ def setup_logging(config_file=None, parse_args=True):
 
     Args:
         config_file: Optional path to config file
-        parse_args: Whether to parse command-line arguments (default: True)
+        use_cli_args: Whether to parse command-line arguments (default: True)
     """
-    return LoggingConfig.initialize(config_file=config_file, parse_args=parse_args)
+    return LoggingConfig.initialize(config_file=config_file, use_cli_args=use_cli_args)
 
-__all__ = ['get_logger', 'ColoredLogger', 'LoggingConfig', 'setup_logging']
+
+__all__ = [
+    "get_logger",
+    "ColoredLogger",
+    "ColoredFormatter",
+    "MultiProcessingLog" "CriticalExitHandler",
+    "LoggingConfig",
+    "setup_logging",
+]

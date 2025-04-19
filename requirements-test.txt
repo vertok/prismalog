@@ -1,0 +1,7 @@
+# Testing tools
+pytest>=8.3.5        # Unit testing framework
+pytest-cov>=3.0.0    # Code coverage for pytest
+coverage>=7.6.1      # Code coverage measurement
+# Test-specific dependencies
+nltk>=3.9.1          # For text analysis in tests
+PyYAML>=6.0.2        # For YAML configuration testing

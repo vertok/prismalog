@@ -12,49 +12,121 @@ It runs multiple processes that log messages concurrently and collects
 detailed statistics about performance characteristics.
 """
 
-import os
 import gc
-import time
-import statistics
 import multiprocessing
+import os
+import statistics
+import time
 from datetime import datetime
-import psutil
-from prismalog.log import ColoredLogger, get_logger
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
-# Disable rotation for performance tests to avoid timing variations
-os.environ['LOG_DISABLE_ROTATION'] = '1'
+from prismalog.argparser import extract_logging_args, get_argument_parser
+from prismalog.log import ColoredLogger, LoggingConfig, get_logger
 
-def get_memory_usage():
+# Create parser with standard logging arguments
+parser = get_argument_parser(description="prismalog Multiprocessing Performance Test")
+
+# Parse arguments
+args = parser.parse_args()
+
+# Extract logging arguments and add benchmark-specific settings
+logging_args = extract_logging_args(args)
+logging_args.update(
+    {"colored_console": True, "test_mode": False, "disable_rotation": True}  # Disable rotation for performance tests
+)
+
+# Initialize logging configuration
+LoggingConfig.initialize(use_cli_args=True, **logging_args)
+
+
+def get_memory_usage() -> float:
     """
-    Get current memory usage of the process.
+    Get current memory usage of the process using standard Python.
 
     Returns:
         float: Current memory usage in megabytes.
     """
-    process = psutil.Process(os.getpid())
-    return process.memory_info().rss / (1024 * 1024)
+    import resource
+
+    # Get maximum resident set size (in bytes on Linux)
+    rusage = resource.getrusage(resource.RUSAGE_SELF)
+    # Convert to megabytes
+    return rusage.ru_maxrss / 1024  # ru_maxrss is in KB on Linux
 
 
-def measure_time(func):
+def measure_time(func: Callable[..., Any]) -> Callable[..., Tuple[Any, float]]:
     """
     Decorator to measure function execution time.
 
     Args:
-        func (callable): The function to measure.
+        func: The function to measure.
 
     Returns:
-        callable: A wrapper function that returns the original result and elapsed time.
+        A wrapper function that returns the original result and elapsed time.
     """
-    def wrapper(*args, **kwargs):
+
+    def wrapper(*args: Any, **kwargs: Any) -> Tuple[Any, float]:
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
         elapsed = end_time - start_time
         return result, elapsed
+
     return wrapper
 
 
-def worker_process(num_messages, result_queue, batch_size=100):
+def log_batch(logger: Any, level: str, message: str, count: int) -> None:
+    """
+    Log a batch of messages at the specified level.
+
+    Args:
+        logger: The logger to use
+        level: Log level ('debug', 'info', 'warning', 'error')
+        message: The message to log
+        count: Number of times to log the message
+    """
+    log_method = getattr(logger, level.lower())
+    for _ in range(count):
+        log_method(message)
+
+
+def calculate_tps(total_messages: int, total_time: float) -> float:
+    """
+    Calculate transactions per second.
+
+    Args:
+        total_messages: Total number of messages logged
+        total_time: Total time taken in seconds
+
+    Returns:
+        Messages per second rate
+    """
+    if total_time > 0:
+        return total_messages / total_time
+    return 0.0
+
+
+def time_log_level(logger: Any, level: str, message: str, batch_size: int) -> float:
+    """
+    Time how long it takes to log a batch of messages at a specific level.
+
+    Args:
+        logger: The logger instance to use
+        level: Log level to test
+        message: The message to log repeatedly
+        batch_size: Number of messages to log in the batch
+
+    Returns:
+        Time taken in seconds to log the batch
+    """
+    start_time = time.time()
+    log_batch(logger, level, message, batch_size)
+    end_time = time.time()
+    return end_time - start_time
+
+
+def worker_process(num_messages: int, result_queue: multiprocessing.Queue, batch_size: int = 100) -> None:
     """
     Worker process that generates log messages and reports detailed metrics.
 
@@ -63,12 +135,9 @@ def worker_process(num_messages, result_queue, batch_size=100):
     metrics which are then sent back to the main process.
 
     Args:
-        num_messages (int): Number of messages to log per level
-        result_queue (multiprocessing.Queue): Queue to send results back to main process
-        batch_size (int, optional): Measure time per this many messages. Defaults to 100.
-
-    Returns:
-        None: Results are sent via the result_queue
+        num_messages: Number of messages to log per level
+        result_queue: Queue to send results back to main process
+        batch_size: Measure time per this many messages. Defaults to 100.
     """
     # Prepare worker process
     pid = os.getpid()
@@ -79,12 +148,7 @@ def worker_process(num_messages, result_queue, batch_size=100):
         logger.debug("Warm-up message")
 
     # Track timing metrics
-    timings = {
-        'debug': [],
-        'info': [],
-        'warning': [],
-        'error': []
-    }
+    timings: Dict[str, List[float]] = {"debug": [], "info": [], "warning": [], "error": []}
 
     # Track memory usage
     start_memory = get_memory_usage()
@@ -103,7 +167,7 @@ def worker_process(num_messages, result_queue, batch_size=100):
         end = time.time()
 
         batch_time = end - start
-        timings['debug'].append(batch_time / batch_size_actual)
+        timings["debug"].append(batch_time / batch_size_actual)
 
     # Log info messages
     for batch_start in range(0, num_messages, batch_size):
@@ -116,7 +180,7 @@ def worker_process(num_messages, result_queue, batch_size=100):
         end = time.time()
 
         batch_time = end - start
-        timings['info'].append(batch_time / batch_size_actual)
+        timings["info"].append(batch_time / batch_size_actual)
 
     # Log warning messages
     for batch_start in range(0, num_messages, batch_size):
@@ -129,7 +193,7 @@ def worker_process(num_messages, result_queue, batch_size=100):
         end = time.time()
 
         batch_time = end - start
-        timings['warning'].append(batch_time / batch_size_actual)
+        timings["warning"].append(batch_time / batch_size_actual)
 
     # Log error messages (fewer to avoid cluttering logs)
     error_count = max(10, num_messages // 10)
@@ -143,23 +207,25 @@ def worker_process(num_messages, result_queue, batch_size=100):
         end = time.time()
 
         batch_time = end - start
-        timings['error'].append(batch_time / batch_size_actual)
+        timings["error"].append(batch_time / batch_size_actual)
 
     # Calculate overall metrics
     worker_duration = time.time() - worker_start_time
     end_memory = get_memory_usage()
 
     # Send results back to main process
-    result_queue.put({
-        'pid': pid,
-        'duration': worker_duration,
-        'message_count': num_messages * 3 + error_count,  # debug + info + warning + error
-        'timings': timings,
-        'memory_delta': end_memory - start_memory
-    })
+    result_queue.put(
+        {
+            "pid": pid,
+            "duration": worker_duration,
+            "message_count": num_messages * 3 + error_count,  # debug + info + warning + error
+            "timings": timings,
+            "memory_delta": end_memory - start_memory,
+        }
+    )
 
 
-def format_statistics(values):
+def format_statistics(values: List[float]) -> str:
     """
     Format statistical values for display.
 
@@ -167,10 +233,10 @@ def format_statistics(values):
     values and formats them for human-readable output.
 
     Args:
-        values (list): List of numeric values to analyze
+        values: List of numeric values to analyze
 
     Returns:
-        str: Formatted string with statistics
+        Formatted string with statistics
     """
     if not values:
         return "N/A"
@@ -185,7 +251,7 @@ def format_statistics(values):
         return f"mean={mean*1000:.2f}ms, median={median*1000:.2f}ms"
 
 
-def main():
+def main() -> None:
     """
     Main function to run the performance test.
 
@@ -199,9 +265,9 @@ def main():
     Run this function to benchmark the prismalog package's performance.
     """
     # Configuration
-    NUM_PROCESSES = 2            # pylint: disable=invalid-name
-    MESSAGES_PER_PROCESS = 1000  # pylint: disable=invalid-name
-    BATCH_SIZE = 100             # pylint: disable=invalid-name
+    NUM_PROCESSES = 4  # pylint: disable=invalid-name
+    MESSAGES_PER_PROCESS = 1200  # pylint: disable=invalid-name
+    BATCH_SIZE = 100  # pylint: disable=invalid-name
 
     print(f"\n{'='*60}")
     print(f"COLORED LOGGER PERFORMANCE TEST - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -222,19 +288,20 @@ def main():
     log_file = ColoredLogger._log_file_path
     print(f"Log file: {log_file}")
 
-    initial_log_files = len([f for f in os.listdir(os.path.dirname(log_file))
-                           if f.startswith(os.path.basename(log_file).split('.')[0])])
+    # Use null-safe approach with Path for file operations
+    if log_file is not None:
+        log_path = Path(log_file)
+        initial_log_files = len([f for f in os.listdir(log_path.parent) if f.startswith(log_path.name.split(".")[0])])
+    else:
+        initial_log_files = 0
 
     print("\nStarting worker processes...")
-    processes = []
-    result_queue = multiprocessing.Queue()
+    processes: List[multiprocessing.Process] = []
+    result_queue: multiprocessing.Queue = multiprocessing.Queue()
 
     # Start worker processes
     for i in range(NUM_PROCESSES):
-        p = multiprocessing.Process(
-            target=worker_process,
-            args=(MESSAGES_PER_PROCESS, result_queue, BATCH_SIZE)
-        )
+        p = multiprocessing.Process(target=worker_process, args=(MESSAGES_PER_PROCESS, result_queue, BATCH_SIZE))
         processes.append(p)
         p.start()
         print(f"• Started worker {i+1}/{NUM_PROCESSES} (PID: {p.pid})")
@@ -249,33 +316,32 @@ def main():
 
     # Calculate aggregate statistics
     total_duration = time.time() - test_start
-    total_messages = sum(r['message_count'] for r in results)
+    total_messages = sum(r["message_count"] for r in results)
 
     # Aggregate timing data
-    all_timings = {
-        'debug': [],
-        'info': [],
-        'warning': [],
-        'error': []
-    }
+    all_timings: Dict[str, List[float]] = {"debug": [], "info": [], "warning": [], "error": []}
 
     for r in results:
-        for level, timings in r['timings'].items():
+        for level, timings in r["timings"].items():
             all_timings[level].extend(timings)
 
     # Measure log file size
     try:
-        log_size = os.path.getsize(log_file) / (1024 * 1024)  # MB
+        log_size = 0.0
+        if log_file is not None:
+            log_size = os.path.getsize(log_file) / (1024 * 1024)  # MB
     except:
         log_size = 0
 
-    # Final memory usage
-    gc.collect()
-    final_memory = get_memory_usage()
+    # Use null-safe approach with Path for file operations
+    final_log_files = 0
+    if log_file is not None:
+        log_path = Path(log_file)
+        final_log_files = len([f for f in os.listdir(log_path.parent) if f.startswith(log_path.name.split(".")[0])])
 
-    final_log_files = len([f for f in os.listdir(os.path.dirname(log_file))
-                         if f.startswith(os.path.basename(log_file).split('.')[0])])
     print(f"• Log files created: {final_log_files - initial_log_files}")
+
+    final_memory = get_memory_usage()
 
     # Print results
     print(f"\n{'='*60}")

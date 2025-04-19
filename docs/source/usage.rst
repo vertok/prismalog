@@ -23,6 +23,39 @@ Basic Usage
    logger.error("Error message")
    logger.critical("Critical message")
 
+Usage
+=====
+
+Command Line Interface
+----------------------
+
+prismalog provides a standardized command-line interface through its argument parser.
+All applications using prismalog can access these common arguments:
+
+.. code-block:: bash
+
+    python your_script.py [options]
+
+Common Arguments
+~~~~~~~~~~~~~~~~
+
+--log-level LEVEL
+    Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    Default: INFO
+
+--log-dir DIR
+    Specify the directory for log files
+    Default: ./logs
+
+--log-config FILE
+    Use a YAML configuration file for logging settings
+
+--no-exit-on-critical
+    Prevent program termination on critical errors
+
+--no-color
+    Disable colored console output
+
 .. _colored-console-output:
 
 Colored Console Output

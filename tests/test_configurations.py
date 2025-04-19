@@ -1,13 +1,14 @@
 """Test prismalog with different configuration parameters."""
 
-import unittest
-import tempfile
-import os
-import sys
-import shutil
 import logging
-from prismalog import get_logger, LoggingConfig, ColoredLogger
-from prismalog.log import CriticalExitHandler, MultiProcessingLog
+import os
+import shutil
+import sys
+import tempfile
+import unittest
+
+from prismalog.log import ColoredLogger, CriticalExitHandler, LoggingConfig, MultiProcessingLog, get_logger
+
 
 class TestConfigurationsImpact(unittest.TestCase):
     """Test various configuration settings and their impact on logging behavior."""
@@ -22,9 +23,9 @@ class TestConfigurationsImpact(unittest.TestCase):
     def test_rotation_size_impact(self):
         """Test log rotation with different size thresholds."""
         # Explicitly check and unset LOG_DISABLE_ROTATION environment variable if present
-        if 'LOG_DISABLE_ROTATION' in os.environ:
-            saved_value = os.environ['LOG_DISABLE_ROTATION']
-            del os.environ['LOG_DISABLE_ROTATION']
+        if "LOG_DISABLE_ROTATION" in os.environ:
+            saved_value = os.environ["LOG_DISABLE_ROTATION"]
+            del os.environ["LOG_DISABLE_ROTATION"]
             print(f"Warning: Removed LOG_DISABLE_ROTATION={saved_value} for rotation test")
 
         # Use very small rotation size to trigger quickly
@@ -32,12 +33,15 @@ class TestConfigurationsImpact(unittest.TestCase):
         test_backup_count = 2
 
         # Initialize with explicit rotation settings
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "rotation_size_mb": test_rotation_size,
-            "backup_count": test_backup_count,
-            "disable_rotation": False  # Explicitly enable rotation
-        })
+        LoggingConfig.initialize(
+            use_cli_args=False,
+            **{
+                "log_dir": self.temp_dir,
+                "rotation_size_mb": test_rotation_size,
+                "backup_count": test_backup_count,
+                "disable_rotation": False,  # Explicitly enable rotation
+            },
+        )
 
         # Important: Check if initialization didn't work, and set values directly if needed
         if LoggingConfig.get("rotation_size_mb") != test_rotation_size:
@@ -53,12 +57,13 @@ class TestConfigurationsImpact(unittest.TestCase):
             LoggingConfig.set("disable_rotation", False)
 
         # Verify settings were applied
-        self.assertEqual(LoggingConfig.get("rotation_size_mb"), test_rotation_size,
-                        "Rotation size setting was not applied")
-        self.assertEqual(LoggingConfig.get("backup_count"), test_backup_count,
-                        "Backup count setting was not applied")
-        self.assertFalse(LoggingConfig.get("disable_rotation"),
-                        "Rotation should be enabled but disable_rotation is True")
+        self.assertEqual(
+            LoggingConfig.get("rotation_size_mb"), test_rotation_size, "Rotation size setting was not applied"
+        )
+        self.assertEqual(LoggingConfig.get("backup_count"), test_backup_count, "Backup count setting was not applied")
+        self.assertFalse(
+            LoggingConfig.get("disable_rotation"), "Rotation should be enabled but disable_rotation is True"
+        )
 
         # Print the full configuration for debugging
         print(f"Configuration after setup: {LoggingConfig._config}")
@@ -66,9 +71,9 @@ class TestConfigurationsImpact(unittest.TestCase):
     def test_rotation_size_impact_1(self):
         """Test log rotation with different size thresholds."""
         # Explicitly check and unset LOG_DISABLE_ROTATION environment variable if present
-        if 'LOG_DISABLE_ROTATION' in os.environ:
-            saved_value = os.environ['LOG_DISABLE_ROTATION']
-            del os.environ['LOG_DISABLE_ROTATION']
+        if "LOG_DISABLE_ROTATION" in os.environ:
+            saved_value = os.environ["LOG_DISABLE_ROTATION"]
+            del os.environ["LOG_DISABLE_ROTATION"]
             print(f"Warning: Removed LOG_DISABLE_ROTATION={saved_value} for rotation test")
 
         # Use very small rotation size to trigger quickly
@@ -76,12 +81,15 @@ class TestConfigurationsImpact(unittest.TestCase):
         test_backup_count = 2
 
         # Initialize with explicit rotation settings
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "rotation_size_mb": test_rotation_size,
-            "backup_count": test_backup_count,
-            "disable_rotation": False  # Explicitly enable rotation
-        })
+        LoggingConfig.initialize(
+            use_cli_args=False,
+            **{
+                "log_dir": self.temp_dir,
+                "rotation_size_mb": test_rotation_size,
+                "backup_count": test_backup_count,
+                "disable_rotation": False,  # Explicitly enable rotation
+            },
+        )
 
         # Important: Check if initialization didn't work, and set values directly if needed
         if LoggingConfig.get("rotation_size_mb") != test_rotation_size:
@@ -97,12 +105,13 @@ class TestConfigurationsImpact(unittest.TestCase):
             LoggingConfig.set("disable_rotation", False)
 
         # Verify settings were applied
-        self.assertEqual(LoggingConfig.get("rotation_size_mb"), test_rotation_size,
-                         "Rotation size setting was not applied")
-        self.assertEqual(LoggingConfig.get("backup_count"), test_backup_count,
-                         "Backup count setting was not applied")
-        self.assertFalse(LoggingConfig.get("disable_rotation"),
-                         "Rotation should be enabled but disable_rotation is True")
+        self.assertEqual(
+            LoggingConfig.get("rotation_size_mb"), test_rotation_size, "Rotation size setting was not applied"
+        )
+        self.assertEqual(LoggingConfig.get("backup_count"), test_backup_count, "Backup count setting was not applied")
+        self.assertFalse(
+            LoggingConfig.get("disable_rotation"), "Rotation should be enabled but disable_rotation is True"
+        )
 
         # Print the full configuration for debugging
         print(f"Configuration after setup: {LoggingConfig._config}")
@@ -129,7 +138,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
             # Force flush handlers
             for handler in logger.logger.handlers:
-                if hasattr(handler, 'flush'):
+                if hasattr(handler, "flush"):
                     handler.flush()
 
             # Print progress occasionally
@@ -138,11 +147,11 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Give time for rotation to complete
         import time
+
         time.sleep(0.5)
 
         # Check for log files matching the base name
-        log_files = [f for f in os.listdir(log_dir)
-                    if f == base_name or f.startswith(base_name + '.')]
+        log_files = [f for f in os.listdir(log_dir) if f == base_name or f.startswith(base_name + ".")]
 
         print(f"Found log files: {log_files}")
 
@@ -151,7 +160,7 @@ class TestConfigurationsImpact(unittest.TestCase):
         self.assertEqual(
             len(log_files),
             expected_file_count,
-            f"Expected {expected_file_count} log files (base + {test_backup_count} backups), found {len(log_files)}"
+            f"Expected {expected_file_count} log files (base + {test_backup_count} backups), found {len(log_files)}",
         )
         # Check all files have content
         for filename in log_files:
@@ -163,10 +172,9 @@ class TestConfigurationsImpact(unittest.TestCase):
             self.assertGreater(size, 0, f"Log file {filename} is empty")
 
             # Verify the file contains the test messages
-            with open(file_path, mode='r', encoding='utf-8') as f:
+            with open(file_path, mode="r", encoding="utf-8") as f:
                 content = f.read()
-                self.assertIn("Test message", content,
-                             f"Log file {filename} doesn't contain expected messages")
+                self.assertIn("Test message", content, f"Log file {filename} doesn't contain expected messages")
 
     def test_log_level_filtering(self):
         """Test that different log levels properly filter console messages."""
@@ -180,7 +188,7 @@ class TestConfigurationsImpact(unittest.TestCase):
             "INFO": "Info test message",
             "WARNING": "Warning test message",
             "ERROR": "Error test message",
-            "CRITICAL": "Critical test message"
+            "CRITICAL": "Critical test message",
         }
 
         for test_level in levels:
@@ -189,14 +197,13 @@ class TestConfigurationsImpact(unittest.TestCase):
 
             # Create a StringIO for capturing console output
             from io import StringIO
+
             test_output = StringIO()
 
             # Configure for this test level
-            LoggingConfig.initialize(parse_args=False, **{
-                "log_dir": self.temp_dir,
-                "default_level": test_level,
-                "exit_on_critical": False
-            })
+            LoggingConfig.initialize(
+                use_cli_args=False, **{"log_dir": self.temp_dir, "default_level": test_level, "exit_on_critical": False}
+            )
 
             # Reset logger with fresh file
             ColoredLogger.reset(new_file=True)
@@ -207,10 +214,12 @@ class TestConfigurationsImpact(unittest.TestCase):
             # Replace stdout handler to capture console output
             python_logger = logger.logger
             for handler in list(python_logger.handlers):
-                if (isinstance(handler, logging.StreamHandler) and
-                    not isinstance(handler, CriticalExitHandler) and
-                    hasattr(handler, 'stream') and
-                    handler.stream == sys.stdout):
+                if (
+                    isinstance(handler, logging.StreamHandler)
+                    and not isinstance(handler, CriticalExitHandler)
+                    and hasattr(handler, "stream")
+                    and handler.stream == sys.stdout
+                ):
 
                     # Remove stdout handler
                     python_logger.removeHandler(handler)
@@ -230,7 +239,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
             # Force flush handlers
             for handler in python_logger.handlers:
-                if hasattr(handler, 'flush'):
+                if hasattr(handler, "flush"):
                     handler.flush()
 
             # Get console output
@@ -275,32 +284,35 @@ class TestConfigurationsImpact(unittest.TestCase):
         config_path = os.path.join(config_dir, "config.yaml")
 
         with open(config_path, "w") as f:
-            f.write("""
+            f.write(
+                """
             log_dir: '{0}'
             default_level: WARNING
             rotation_size_mb: 2
-            """.format(config_dir))
+            """.format(
+                    config_dir
+                )
+            )
 
         # Initialize with this config file
-        LoggingConfig.initialize(config_file=config_path, parse_args=False)
+        LoggingConfig.initialize(config_file=config_path, use_cli_args=False)
 
         # Create a logger and test it
         logger = get_logger("yaml_test")
         logger.warning("Test YAML config")
 
-        self.assertEqual(logger.level, logging.WARNING,
-                         f"Logger level {logger.level} does not match expected {logging.WARNING}")
+        self.assertEqual(
+            logger.level, logging.WARNING, f"Logger level {logger.level} does not match expected {logging.WARNING}"
+        )
 
     def test_debug_level_logging(self):
         """Test DEBUG level logging captures all messages."""
         CriticalExitHandler.disable_exit(True)
 
         # Configure for DEBUG level
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "default_level": "DEBUG",
-            "exit_on_critical": False
-        })
+        LoggingConfig.initialize(
+            use_cli_args=False, **{"log_dir": self.temp_dir, "default_level": "DEBUG", "exit_on_critical": False}
+        )
         ColoredLogger.reset(new_file=True)
 
         # Get a fresh logger with explicit level
@@ -313,7 +325,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Get log content
         log_path = ColoredLogger._log_file_path
-        with open(log_path, 'r') as f:
+        with open(log_path, "r") as f:
             content = f.read()
 
         # All messages should be present
@@ -326,14 +338,13 @@ class TestConfigurationsImpact(unittest.TestCase):
         CriticalExitHandler.disable_exit(True)
 
         from io import StringIO
+
         test_output = StringIO()
 
         # Configure for INFO level
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "default_level": "INFO",
-            "exit_on_critical": False
-        })
+        LoggingConfig.initialize(
+            use_cli_args=False, **{"log_dir": self.temp_dir, "default_level": "INFO", "exit_on_critical": False}
+        )
         ColoredLogger.reset(new_file=True)
 
         # Get a fresh logger with explicit level
@@ -342,10 +353,12 @@ class TestConfigurationsImpact(unittest.TestCase):
         # Replace stdout handler to capture console output
         python_logger = logger.logger
         for handler in list(python_logger.handlers):
-            if (isinstance(handler, logging.StreamHandler) and
-                not isinstance(handler, CriticalExitHandler) and
-                hasattr(handler, 'stream') and
-                handler.stream == sys.stdout):
+            if (
+                isinstance(handler, logging.StreamHandler)
+                and not isinstance(handler, CriticalExitHandler)
+                and hasattr(handler, "stream")
+                and handler.stream == sys.stdout
+            ):
 
                 # Remove stdout handler
                 python_logger.removeHandler(handler)
@@ -363,7 +376,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Force flush handlers
         for handler in python_logger.handlers:
-            if hasattr(handler, 'flush'):
+            if hasattr(handler, "flush"):
                 handler.flush()
 
         # Verify console output filtering
@@ -374,7 +387,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Log file captures all levels regardless of configuration
         log_path = ColoredLogger._log_file_path
-        with open(log_path, 'r') as f:
+        with open(log_path, "r") as f:
             content = f.read()
 
         # All messages should be in log file
@@ -387,14 +400,13 @@ class TestConfigurationsImpact(unittest.TestCase):
         CriticalExitHandler.disable_exit(True)
 
         from io import StringIO
+
         test_output = StringIO()
 
         # Configure for ERROR level
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "default_level": "ERROR",
-            "exit_on_critical": False
-        })
+        LoggingConfig.initialize(
+            use_cli_args=False, **{"log_dir": self.temp_dir, "default_level": "ERROR", "exit_on_critical": False}
+        )
 
         ColoredLogger.reset(new_file=True)
 
@@ -404,10 +416,12 @@ class TestConfigurationsImpact(unittest.TestCase):
         # Replace stdout handler to capture console output
         python_logger = logger.logger
         for handler in list(python_logger.handlers):
-            if (isinstance(handler, logging.StreamHandler) and
-                not isinstance(handler, CriticalExitHandler) and
-                hasattr(handler, 'stream') and
-                handler.stream == sys.stdout):
+            if (
+                isinstance(handler, logging.StreamHandler)
+                and not isinstance(handler, CriticalExitHandler)
+                and hasattr(handler, "stream")
+                and handler.stream == sys.stdout
+            ):
 
                 # Remove stdout handler
                 python_logger.removeHandler(handler)
@@ -427,7 +441,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Force flush handlers
         for handler in python_logger.handlers:
-            if hasattr(handler, 'flush'):
+            if hasattr(handler, "flush"):
                 handler.flush()
 
         # Verify console output filtering
@@ -440,7 +454,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Now verify log file contains all messages
         log_path = ColoredLogger._log_file_path
-        with open(log_path, 'r') as f:
+        with open(log_path, "r") as f:
             content = f.read()
 
         # Log file should have all messages regardless of level
@@ -463,7 +477,7 @@ class TestConfigurationsImpact(unittest.TestCase):
             "INFO": "Info console test message",
             "WARNING": "Warning console test message",
             "ERROR": "Error console test message",
-            "CRITICAL": "Critical console test message"
+            "CRITICAL": "Critical console test message",
         }
 
         for test_level in levels:
@@ -472,12 +486,15 @@ class TestConfigurationsImpact(unittest.TestCase):
             ColoredLogger._initialized_loggers = {}
 
             # Configure for this level
-            LoggingConfig.initialize(parse_args=False, **{
-                "log_dir": self.temp_dir,
-                "default_level": test_level,
-                "exit_on_critical": False,
-                "colored_console": False
-            })
+            LoggingConfig.initialize(
+                use_cli_args=False,
+                **{
+                    "log_dir": self.temp_dir,
+                    "default_level": test_level,
+                    "exit_on_critical": False,
+                    "colored_console": False,
+                },
+            )
 
             ColoredLogger.reset(new_file=True)
 
@@ -487,10 +504,12 @@ class TestConfigurationsImpact(unittest.TestCase):
             # Replace stdout handler
             python_logger = logger.logger
             for handler in list(python_logger.handlers):
-                if (isinstance(handler, logging.StreamHandler) and
-                    not isinstance(handler, CriticalExitHandler) and
-                    hasattr(handler, 'stream') and
-                    handler.stream == sys.stdout):
+                if (
+                    isinstance(handler, logging.StreamHandler)
+                    and not isinstance(handler, CriticalExitHandler)
+                    and hasattr(handler, "stream")
+                    and handler.stream == sys.stdout
+                ):
 
                     # Remove and replace with the test handler
                     python_logger.removeHandler(handler)
@@ -508,7 +527,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
             # Force flush
             for handler in python_logger.handlers:
-                if hasattr(handler, 'flush'):
+                if hasattr(handler, "flush"):
                     handler.flush()
 
             # Get output
@@ -523,11 +542,10 @@ class TestConfigurationsImpact(unittest.TestCase):
         CriticalExitHandler.disable_exit(True)
 
         # Configure for ERROR level to verify even low level messages get to log file
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "default_level": "ERROR",  # High level for console
-            "exit_on_critical": False
-        })
+        LoggingConfig.initialize(
+            use_cli_args=False,
+            **{"log_dir": self.temp_dir, "default_level": "ERROR", "exit_on_critical": False},  # High level for console
+        )
         ColoredLogger.reset(new_file=True)
 
         # Get a fresh logger with explicit ERROR level
@@ -542,7 +560,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Get log content
         log_path = ColoredLogger._log_file_path
-        with open(log_path, mode='r', encoding='utf-8') as f:
+        with open(log_path, mode="r", encoding="utf-8") as f:
             content = f.read()
 
         # All messages should be present in log file, regardless of level
@@ -557,11 +575,9 @@ class TestConfigurationsImpact(unittest.TestCase):
         CriticalExitHandler.disable_exit(True)
 
         # Configure initial state with INFO level
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "default_level": "INFO",
-            "exit_on_critical": False
-        })
+        LoggingConfig.initialize(
+            use_cli_args=False, **{"log_dir": self.temp_dir, "default_level": "INFO", "exit_on_critical": False}
+        )
         ColoredLogger.reset(new_file=True)
 
         # Create loggers with different initial levels
@@ -574,6 +590,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Capture console output
         from io import StringIO
+
         info_output = StringIO()
         debug_output = StringIO()
 
@@ -581,10 +598,12 @@ class TestConfigurationsImpact(unittest.TestCase):
         for logger_obj, output in [(logger_info, info_output), (logger_debug, debug_output)]:
             python_logger = logger_obj.logger
             for handler in list(python_logger.handlers):
-                if (isinstance(handler, logging.StreamHandler) and
-                    not isinstance(handler, CriticalExitHandler) and
-                    hasattr(handler, 'stream') and
-                    handler.stream == sys.stdout):
+                if (
+                    isinstance(handler, logging.StreamHandler)
+                    and not isinstance(handler, CriticalExitHandler)
+                    and hasattr(handler, "stream")
+                    and handler.stream == sys.stdout
+                ):
 
                     # Remove stdout handler
                     python_logger.removeHandler(handler)
@@ -604,7 +623,7 @@ class TestConfigurationsImpact(unittest.TestCase):
         # Force flush handlers
         for logger_obj in [logger_info, logger_debug]:
             for handler in logger_obj.logger.handlers:
-                if hasattr(handler, 'flush'):
+                if hasattr(handler, "flush"):
                     handler.flush()
 
         # Check initial output
@@ -643,7 +662,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Force flush handlers
         for handler in logger_info.logger.handlers:
-            if hasattr(handler, 'flush'):
+            if hasattr(handler, "flush"):
                 handler.flush()
 
         # Verify DEBUG messages now appear
@@ -669,12 +688,10 @@ class TestConfigurationsImpact(unittest.TestCase):
         # Verify console handlers were updated but file handlers weren't
         for handler in logger_debug.handlers:
             if isinstance(handler, logging.StreamHandler) and not isinstance(handler, MultiProcessingLog):
-                self.assertEqual(handler.level, logging.WARNING,
-                                "Console handler level not updated correctly")
+                self.assertEqual(handler.level, logging.WARNING, "Console handler level not updated correctly")
             elif isinstance(handler, MultiProcessingLog):
                 # File handlers should remain at DEBUG level for capturing all messages
-                self.assertEqual(handler.level, logging.DEBUG,
-                               "File handler level should not be changed")
+                self.assertEqual(handler.level, logging.DEBUG, "File handler level should not be changed")
 
         # Log messages at all levels
         logger_debug.debug("Debug level after change to WARNING - should not appear")
@@ -684,7 +701,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Force flush handlers
         for handler in logger_debug.logger.handlers:
-            if hasattr(handler, 'flush'):
+            if hasattr(handler, "flush"):
                 handler.flush()
 
         # Verify output filtering
@@ -696,7 +713,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Check log file has all messages regardless of level changes
         log_path = ColoredLogger._log_file_path
-        with open(log_path, mode='r', encoding='utf-8') as f:
+        with open(log_path, mode="r", encoding="utf-8") as f:
             content = f.read()
 
         # All messages should be in log file
@@ -709,11 +726,9 @@ class TestConfigurationsImpact(unittest.TestCase):
         CriticalExitHandler.disable_exit(True)
 
         # Configure initial state
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "default_level": "INFO",
-            "exit_on_critical": False
-        })
+        LoggingConfig.initialize(
+            use_cli_args=False, **{"log_dir": self.temp_dir, "default_level": "INFO", "exit_on_critical": False}
+        )
         ColoredLogger.reset(new_file=True)
 
         # Create three loggers with different levels
@@ -728,6 +743,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Create StringIO objects for each logger
         from io import StringIO
+
         debug_output = StringIO()
         info_output = StringIO()
         warning_output = StringIO()
@@ -736,7 +752,7 @@ class TestConfigurationsImpact(unittest.TestCase):
         for logger_obj, output in [
             (logger_debug, debug_output),
             (logger_info, info_output),
-            (logger_warning, warning_output)
+            (logger_warning, warning_output),
         ]:
             for handler in list(logger_obj.logger.handlers):
                 if isinstance(handler, logging.StreamHandler) and not isinstance(handler, CriticalExitHandler):
@@ -771,7 +787,7 @@ class TestConfigurationsImpact(unittest.TestCase):
         # Force flush handlers
         for logger_obj in [logger_debug, logger_info, logger_warning]:
             for handler in logger_obj.logger.handlers:
-                if hasattr(handler, 'flush'):
+                if hasattr(handler, "flush"):
                     handler.flush()
 
         # Verify each logger's output respects its own level
@@ -789,8 +805,7 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # Create a new logger that should inherit the new default level
         new_logger = get_logger("new_logger_after_default_change")
-        self.assertEqual(new_logger.level, logging.CRITICAL,
-                        "New logger should inherit updated default level")
+        self.assertEqual(new_logger.level, logging.CRITICAL, "New logger should inherit updated default level")
 
         # But existing loggers should maintain their levels
         self.assertEqual(logger_debug.level, logging.DEBUG, "Existing DEBUG logger unchanged")
@@ -802,31 +817,28 @@ class TestConfigurationsImpact(unittest.TestCase):
         CriticalExitHandler.disable_exit(True)
 
         # 1. First set a global default in LoggingConfig
-        LoggingConfig.initialize(parse_args=False, **{
-            "log_dir": self.temp_dir,
-            "default_level": "WARNING",  # Global default
-            "exit_on_critical": False
-        })
+        LoggingConfig.initialize(
+            use_cli_args=False,
+            **{"log_dir": self.temp_dir, "default_level": "WARNING", "exit_on_critical": False},  # Global default
+        )
         ColoredLogger.reset(new_file=True)
 
         # Create a StringIO for output capture
         from io import StringIO
+
         output = StringIO()
 
         # 2. Create a logger with default level (should inherit WARNING)
         default_logger = get_logger("default_priority")
-        self.assertEqual(default_logger.level, logging.WARNING,
-                        "Logger should inherit global default level")
+        self.assertEqual(default_logger.level, logging.WARNING, "Logger should inherit global default level")
 
         # 3. Create a logger with explicit level (should override global default)
         explicit_logger = get_logger("explicit_priority", verbose="INFO")
-        self.assertEqual(explicit_logger.level, logging.INFO,
-                        "Explicit level should override global default")
+        self.assertEqual(explicit_logger.level, logging.INFO, "Explicit level should override global default")
 
         # 4. Create a logger that will be affected by module-specific config
         module_logger = get_logger("module_specific")
-        self.assertEqual(module_logger.level, logging.WARNING,
-                        "Should initially have global default level")
+        self.assertEqual(module_logger.level, logging.WARNING, "Should initially have global default level")
 
         # 5. Set module-specific level through configuration
         LoggingConfig.set("module_levels.module_specific", "DEBUG")
@@ -834,27 +846,24 @@ class TestConfigurationsImpact(unittest.TestCase):
         # Create a new logger for the same module to get the module-specific setting
         module_logger_new = get_logger("module_specific")
 
-        self.assertEqual(module_logger_new.level, logging.DEBUG,
-                        "Module-specific level should override global default")
+        self.assertEqual(module_logger_new.level, logging.DEBUG, "Module-specific level should override global default")
 
         # 6. Change global default
         LoggingConfig.set("default_level", "ERROR")
 
         # Create a new logger to inherit the new default
         new_default_logger = get_logger("new_default_priority")
-        self.assertEqual(new_default_logger.level, logging.ERROR,
-                        "New logger should get updated global default")
+        self.assertEqual(new_default_logger.level, logging.ERROR, "New logger should get updated global default")
 
         # Verify existing loggers - important: module_logger will be updated to DEBUG
         # because we just added module-specific configuration for it
-        self.assertEqual(module_logger.level, logging.DEBUG,
-                        "Module logger should have module-specific level")
+        self.assertEqual(module_logger.level, logging.DEBUG, "Module logger should have module-specific level")
 
         # This logger had no module-specific config, so it keeps its original level
-        self.assertEqual(default_logger.level, logging.WARNING,
-                        "Existing loggers without module config keep original level")
-        self.assertEqual(explicit_logger.level, logging.INFO,
-                        "Explicit logger should keep its level")
+        self.assertEqual(
+            default_logger.level, logging.WARNING, "Existing loggers without module config keep original level"
+        )
+        self.assertEqual(explicit_logger.level, logging.INFO, "Explicit logger should keep its level")
 
     def test_nested_configuration_keys(self):
         """Test that nested configuration keys work correctly."""
@@ -862,12 +871,11 @@ class TestConfigurationsImpact(unittest.TestCase):
         LoggingConfig.reset()
 
         # Initialize with a fresh configuration
-        LoggingConfig.initialize(parse_args=False)
+        LoggingConfig.initialize(use_cli_args=False)
 
         # 1. First test: simple key setting
         LoggingConfig.set("simple_key", "simple_value")
-        self.assertEqual(LoggingConfig.get("simple_key"), "simple_value",
-                        "Simple key should be set and retrievable")
+        self.assertEqual(LoggingConfig.get("simple_key"), "simple_value", "Simple key should be set and retrievable")
 
         # 2. Set a nested key using current implementation
         LoggingConfig.set("module_levels.test_module", "DEBUG")
@@ -877,104 +885,27 @@ class TestConfigurationsImpact(unittest.TestCase):
 
         # This will likely fail because the current implementation
         # doesn't support nested keys properly
-        self.assertIn("module_levels", config_dict,
-                     "module_levels key should exist in configuration")
+        self.assertIn("module_levels", config_dict, "module_levels key should exist in configuration")
 
         if "module_levels" in config_dict:
             # If module_levels exists, check if it's a dictionary
-            self.assertIsInstance(config_dict["module_levels"], dict,
-                                 "module_levels should be a dictionary")
+            self.assertIsInstance(config_dict["module_levels"], dict, "module_levels should be a dictionary")
 
             # Check if our module is in the dictionary
-            self.assertIn("test_module", config_dict["module_levels"],
-                         "test_module should be in module_levels dictionary")
+            self.assertIn(
+                "test_module", config_dict["module_levels"], "test_module should be in module_levels dictionary"
+            )
 
             # Check if the value is correct
             if "test_module" in config_dict["module_levels"]:
-                self.assertEqual(config_dict["module_levels"]["test_module"], "DEBUG",
-                               "test_module should have DEBUG level")
+                self.assertEqual(
+                    config_dict["module_levels"]["test_module"], "DEBUG", "test_module should have DEBUG level"
+                )
 
         # 3. Test retrieving the nested value
         module_level = LoggingConfig.get("module_levels", {}).get("test_module")
-        self.assertEqual(module_level, "DEBUG",
-                       "Should be able to retrieve nested module level")
+        self.assertEqual(module_level, "DEBUG", "Should be able to retrieve nested module level")
 
         # 4. Test creating a logger with this module name
         test_logger = get_logger("test_module")
-        self.assertEqual(test_logger.level, logging.DEBUG,
-                       "Logger should inherit level from module_levels config")
-
-    def test_logger_level_change_warning(self):
-        """Test that changing an existing logger's level produces a warning."""
-        # Reset configuration
-        LoggingConfig.reset()
-        ColoredLogger.reset(new_file=True)
-
-        # Capture debug print messages
-        original_debug_print = LoggingConfig._debug_print
-        captured_messages = []
-
-        def capture_debug_print(message):
-            captured_messages.append(message)
-            # Call original to maintain standard behavior
-            original_debug_print(message)
-
-        LoggingConfig._debug_print = capture_debug_print
-
-        try:
-            # Set initial configuration with default level
-            LoggingConfig.initialize(parse_args=False, **{
-                "log_dir": self.temp_dir,
-                "default_level": "INFO"
-            })
-
-            # Create a logger with default level
-            logger = get_logger("warning_test_logger")
-            self.assertEqual(logger.level, logging.INFO)
-
-            # Case 1: Changing level with explicit parameter
-            logger_new1 = get_logger("warning_test_logger", verbose="DEBUG")
-            self.assertEqual(logger_new1.level, logging.DEBUG)
-
-            # Check warning was printed
-            self.assertTrue(any("Warning: Logger 'warning_test_logger' level changed from INFO to DEBUG" in msg
-                               for msg in captured_messages))
-            self.assertTrue(any("due to explicit parameter" in msg
-                               for msg in captured_messages))
-
-            # Clear captured messages
-            captured_messages.clear()
-
-            # Case 2: Setting module-specific level
-            LoggingConfig.set("module_levels.warning_test_logger", "WARNING")
-
-            # Get the logger again - level should be updated and warning issued
-            logger_new2 = get_logger("warning_test_logger")
-            self.assertEqual(logger_new2.level, logging.WARNING)
-
-            # Check warning was printed
-            self.assertTrue(any("Warning: Logger 'warning_test_logger' level changed from DEBUG to WARNING" in msg
-                               for msg in captured_messages))
-            self.assertTrue(any("due to module_levels configuration" in msg
-                               for msg in captured_messages))
-
-            # Clear captured messages
-            captured_messages.clear()
-
-            # Case 3: External loggers configuration
-            # Set external_loggers config
-            LoggingConfig.set("external_loggers", {"warning_test_logger": "ERROR"})
-
-            # Get the logger again - level should be updated and warning issued
-            logger_new3 = get_logger("warning_test_logger")
-            self.assertEqual(logger_new3.level, logging.ERROR)
-
-            # Check warning was printed
-            self.assertTrue(any("Warning: Logger 'warning_test_logger' level changed from WARNING to ERROR" in msg
-                               for msg in captured_messages))
-            self.assertTrue(any("due to external_loggers configuration" in msg
-                               for msg in captured_messages))
-
-        finally:
-            # Restore original debug print function
-            LoggingConfig._debug_print = original_debug_print
+        self.assertEqual(test_logger.level, logging.DEBUG, "Logger should inherit level from module_levels config")

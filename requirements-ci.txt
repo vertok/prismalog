@@ -1,0 +1,6 @@
+# CI-specific requirements
+-r requirements.txt
+-r requirements-dev.txt
+-r requirements-test.txt
+-r requirements-docs.txt
+anybadge>=1.10.0     # For generating badges in CI
