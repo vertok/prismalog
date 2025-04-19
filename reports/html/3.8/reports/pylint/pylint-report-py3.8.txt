@@ -1,7 +1,3 @@
-************* Module prismalog
-prismalog/__init__.py:31:0: W1404: Implicit string concatenation found in list (implicit-str-concat)
-prismalog/__init__.py:30:4: E0603: Undefined variable name 'ColoredFormatter' in __all__ (undefined-all-variable)
-prismalog/__init__.py:31:4: E0603: Undefined variable name 'MultiProcessingLogCriticalExitHandler' in __all__ (undefined-all-variable)
 ************* Module prismalog.log
 prismalog/log.py:168:19: W0718: Catching too general exception Exception (broad-exception-caught)
 prismalog/log.py:211:19: W0718: Catching too general exception Exception (broad-exception-caught)
@@ -28,5 +24,5 @@ prismalog/config.py:365:30: W1309: Using an f-string that does not have any inte
 prismalog/config.py:366:30: W1309: Using an f-string that does not have any interpolated variables (f-string-without-interpolation)
 
 -----------------------------------
-Your code has been rated at 9.45/10
+Your code has been rated at 9.63/10
 
