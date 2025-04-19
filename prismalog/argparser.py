@@ -15,7 +15,7 @@ Features:
 * Consistent argument naming conventions
 
 Available Arguments:
-------------------
+--------------------
 --log-config           Path to a YAML configuration file
 --log-level            Set the default logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 --log-dir              Directory where log files will be stored
@@ -27,9 +27,9 @@ Available Arguments:
 --backup-count         Number of backup log files to keep
 
 Usage Examples:
--------------
-1. Basic usage:
-    ```python
+---------------
+1. Basic usage::
+
     from prismalog.argparser import get_argument_parser, extract_logging_args
     from prismalog.log import LoggingConfig
 
@@ -45,10 +45,9 @@ Usage Examples:
     # Extract and apply logging configuration
     logging_args = extract_logging_args(args)
     LoggingConfig.from_dict(logging_args)
-    ```
 
-2. Adding to an existing parser:
-    ```python
+2. Adding to an existing parser::
+
     import argparse
     from prismalog.argparser import add_logging_arguments, extract_logging_args
 
@@ -62,7 +61,6 @@ Usage Examples:
     # Parse and extract
     args = parser.parse_args()
     logging_args = extract_logging_args(args)
-    ```
 """
 
 import argparse
