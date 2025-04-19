@@ -362,8 +362,8 @@ class LoggingConfig:
 
                         file_config = yaml.safe_load(f)
                     except ImportError:
-                        print(f"YAML configuration requires PyYAML. Install with: pip install PyYAML")
-                        print(f"Continuing with default configuration.")
+                        print("YAML configuration requires PyYAML. Install with: pip install PyYAML")
+                        print("Continuing with default configuration.")
                         return file_config
                 else:
                     cls.debug_print(f"Unsupported config file format: {config_path}")
