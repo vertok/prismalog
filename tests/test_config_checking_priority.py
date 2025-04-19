@@ -150,7 +150,9 @@ class TestConfigurationLoading(unittest.TestCase):
     def test_standard_env_vars(self):
         """Test that standard (non-GitHub) environment variables override YAML."""
         # Create YAML config
-        yaml_path = self.create_yaml_config({"log_dir": "logs/yaml_logs", "default_level": "DEBUG", "rotation_size_mb": 50})
+        yaml_path = self.create_yaml_config(
+            {"log_dir": "logs/yaml_logs", "default_level": "DEBUG", "rotation_size_mb": 50}
+        )
 
         # Set standard environment variable
         os.environ["LOG_ROTATION_SIZE"] = "25"
@@ -202,7 +204,9 @@ class TestConfigurationLoading(unittest.TestCase):
         os.environ["LOG_ROTATION_SIZE"] = "25"
 
         # Initialize with config file, env vars, and direct kwargs
-        LoggingConfig.initialize(config_file=yaml_path, use_cli_args=False, log_dir="logs/kwarg_logs", default_level="DEBUG")
+        LoggingConfig.initialize(
+            config_file=yaml_path, use_cli_args=False, log_dir="logs/kwarg_logs", default_level="DEBUG"
+        )
 
         # Direct kwargs should override everything
         self.assertEqual(

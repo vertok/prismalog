@@ -27,7 +27,7 @@ from prismalog.argparser import extract_logging_args, get_argument_parser
 
 def create_test_config(config_content):
     """Create a temporary config file with the given content"""
-    temp = tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False)
+    temp = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp.write(config_content)
     temp.close()
     return temp.name
@@ -66,10 +66,7 @@ def run_priority_test():
 
     # Create parser and parse CLI args
     parser = get_argument_parser()
-    cli_args = [
-        "--log-level", "DEBUG",
-        "--log-dir", "cli_logs"
-    ]
+    cli_args = ["--log-level", "DEBUG", "--log-dir", "cli_logs"]
     args = parser.parse_args(cli_args)
     logging_args = extract_logging_args(args)
 
@@ -85,9 +82,12 @@ def run_priority_test():
     # Create parser with both YAML and CLI args
     parser = get_argument_parser()
     cli_args = [
-        "--log-level", "INFO",  # Should override YAML's ERROR
-        "--log-dir", "override_logs",  # Should override YAML's yaml_logs
-        "--log-config", config_path  # Load the YAML config too
+        "--log-level",
+        "INFO",  # Should override YAML's ERROR
+        "--log-dir",
+        "override_logs",  # Should override YAML's yaml_logs
+        "--log-config",
+        config_path,  # Load the YAML config too
     ]
     args = parser.parse_args(cli_args)
     logging_args = extract_logging_args(args)

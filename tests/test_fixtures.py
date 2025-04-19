@@ -23,7 +23,7 @@ def test_module_reset(reset_between_modules):
 def test_logging_config_reset(reset_logging_config, temp_log_dir):
     """Verify per-test logging reset."""
     # Check environment cleaning
-    env_vars = [k for k in os.environ if k.startswith(('LOG_', 'GITHUB_LOG_'))]
+    env_vars = [k for k in os.environ if k.startswith(("LOG_", "GITHUB_LOG_"))]
     assert not env_vars, f"Environment not clean: {env_vars}"
 
     # Check logger state
@@ -88,16 +88,12 @@ def test_environment_clean():
 def test_critical_handler_preservation():
     """Verify critical handlers are preserved when needed."""
     # Initialize with exit_on_critical enabled
-    LoggingConfig.initialize(
-        use_cli_args=False,
-        exit_on_critical=True
-    )
+    LoggingConfig.initialize(use_cli_args=False, exit_on_critical=True)
 
     logger = get_logger("critical_test")
 
     # Count handlers that are CriticalExitHandler
-    critical_handlers = [h for h in logger.logger.handlers
-                        if isinstance(h, CriticalExitHandler)]
+    critical_handlers = [h for h in logger.logger.handlers if isinstance(h, CriticalExitHandler)]
 
     # Debug output
     print("\nHandler types:")

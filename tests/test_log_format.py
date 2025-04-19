@@ -39,11 +39,7 @@ class TestLogFormat:
         """Test setting log format via direct keyword arguments."""
         custom_format = "%(levelname)s - %(name)s: %(message)s"
 
-        LoggingConfig.initialize(
-            use_cli_args=False,
-            log_format=custom_format,
-            colored_console=False
-        )
+        LoggingConfig.initialize(use_cli_args=False, log_format=custom_format, colored_console=False)
 
         logger = get_logger("test_custom")
         logger.info("Test message")
@@ -57,10 +53,7 @@ class TestLogFormat:
         """Test setting log format via environment variable."""
         os.environ["LOG_FORMAT"] = "ENV: %(levelname)s - %(message)s"
 
-        LoggingConfig.initialize(
-            use_cli_args=False,
-            colored_console=False
-        )
+        LoggingConfig.initialize(use_cli_args=False, colored_console=False)
 
         logger = get_logger("test_env")
         logger.info("Test message")
@@ -71,8 +64,9 @@ class TestLogFormat:
         plain_expected = "ENV: INFO - Test message"
         color_expected = f"ENV: \x1b[92mINFO\x1b[0m - Test message"
 
-        assert any(exp in output for exp in [plain_expected, color_expected]), \
-            f"Log entry doesn't match environment-set format. Output: {output!r}"
+        assert any(
+            exp in output for exp in [plain_expected, color_expected]
+        ), f"Log entry doesn't match environment-set format. Output: {output!r}"
 
     def test_log_format_priority(self, capture_logs):
         """Test that log format follows the correct priority order."""
@@ -86,10 +80,7 @@ class TestLogFormat:
             kwargs_format = "KWARGS: %(levelname)s - %(message)s"
 
             LoggingConfig.initialize(
-                use_cli_args=False,
-                config_file=yaml_path,
-                log_format=kwargs_format,
-                colored_console=False
+                use_cli_args=False, config_file=yaml_path, log_format=kwargs_format, colored_console=False
             )
 
             capture_logs.seek(0)
@@ -101,8 +92,9 @@ class TestLogFormat:
             output = capture_logs.get_combined_output()
             print(f"\nCaptured output: {output!r}")
 
-            assert "KWARGS: INFO - Test priority message" in output, \
-                f"Highest priority format not used. Output: {output!r}"
+            assert (
+                "KWARGS: INFO - Test priority message" in output
+            ), f"Highest priority format not used. Output: {output!r}"
             assert "FILE: INFO" not in output
             assert "ENV: INFO" not in output
 
@@ -115,10 +107,7 @@ class TestLogFormat:
         log_dir = tmp_path / "logs"
         log_dir.mkdir(parents=True)
 
-        LoggingConfig.initialize(
-            use_cli_args=False,
-            log_dir=str(log_dir)
-        )
+        LoggingConfig.initialize(use_cli_args=False, log_dir=str(log_dir))
 
         logger = get_logger("test_file")
         logger.info("Test message")

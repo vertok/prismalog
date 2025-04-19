@@ -5,6 +5,7 @@ import pytest
 import logging
 from prismalog.log import ColoredLogger, ColoredFormatter, LoggingConfig, get_logger
 
+
 @pytest.fixture
 def log_dir(tmp_path, capture_logs, capsys):
     """Create a temporary log directory with logging capture."""
@@ -26,9 +27,7 @@ def log_dir(tmp_path, capture_logs, capsys):
 
     # Initialize logging with our capture handler
     LoggingConfig.initialize(
-        use_cli_args=False,
-        log_dir=str(log_dir),
-        colored_console=False  # Disable colored output for testing
+        use_cli_args=False, log_dir=str(log_dir), colored_console=False  # Disable colored output for testing
     )
 
     # Add capture handler that writes to our StringIO
@@ -55,6 +54,7 @@ def log_dir(tmp_path, capture_logs, capsys):
         ColoredLogger._file_handler = None
 
     LoggingConfig.reset()
+
 
 def test_permission_handling(log_dir, capture_logs, capsys):
     """Test handling when log directory permissions are restricted."""
@@ -85,14 +85,11 @@ def test_permission_handling(log_dir, capture_logs, capsys):
     assert "Test restricted permissions" in combined_output, "Should log after restriction"
     assert logger.handlers, "Logger should have fallback handlers"
 
+
 def test_logging_capture_chain(tmp_path, capture_logs):
     """Test to understand the logging capture chain."""
     # Create logger
-    LoggingConfig.initialize(
-        use_cli_args=False,
-        log_dir=str(tmp_path),
-        colored_console=True
-    )
+    LoggingConfig.initialize(use_cli_args=False, log_dir=str(tmp_path), colored_console=True)
 
     logger = get_logger("capture_test")
 

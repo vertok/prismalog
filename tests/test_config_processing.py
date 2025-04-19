@@ -99,7 +99,7 @@ class TestConfigProcessing:
         assert colored_console is False, f"Boolean value not correctly loaded: {colored_console}"
         assert isinstance(colored_console, bool), f"Boolean value not converted to bool: {type(colored_console)}"
 
-    @patch('sys.argv', ['test_script.py', '--log-format', 'CLI: %(levelname)s - %(message)s'])
+    @patch("sys.argv", ["test_script.py", "--log-format", "CLI: %(levelname)s - %(message)s"])
     def test_string_config_from_cli(self):
         """Test that string configurations from CLI arguments are processed correctly."""
         # Initialize with CLI argument support
@@ -121,10 +121,7 @@ class TestConfigProcessing:
         test_format = "%(levelname)s - %(message)s"
         os.environ["LOG_FORMAT"] = test_format
 
-        LoggingConfig.initialize(
-            use_cli_args=False,
-            colored_console=False  # Disable colors for consistent testing
-        )
+        LoggingConfig.initialize(use_cli_args=False, colored_console=False)  # Disable colors for consistent testing
 
         logger = get_logger("test_format")
         logger.info("Test message")
@@ -132,29 +129,26 @@ class TestConfigProcessing:
         output = capture_logs.get_combined_output()
         expected = "INFO - Test message"
 
-        assert expected in output, \
-            f"Expected format not used in actual logging. Output: {output!r}"
+        assert expected in output, f"Expected format not used in actual logging. Output: {output!r}"
 
     def test_config_file_loading(self, capture_logs, tmp_path):
         """Test loading configuration from YAML file."""
         config_path = tmp_path / "test_config.yaml"
-        config_path.write_text("""
+        config_path.write_text(
+            """
 log_format: 'FILE: %(levelname)s - %(message)s'
 colored_console: false
 log_level: INFO
-        """)
-
-        LoggingConfig.initialize(
-            use_cli_args=False,
-            config_file=str(config_path)
+        """
         )
+
+        LoggingConfig.initialize(use_cli_args=False, config_file=str(config_path))
 
         logger = get_logger("test_config")
         logger.info("Test message")
 
         output = capture_logs.get_combined_output()
-        assert "FILE: INFO - Test message" in output, \
-            f"Config file format not used. Output: {output!r}"
+        assert "FILE: INFO - Test message" in output, f"Config file format not used. Output: {output!r}"
 
     def test_config_priority(self, capture_logs, tmp_path):
         """Test configuration source priorities."""
@@ -169,10 +163,7 @@ log_level: INFO
         kwargs_format = "KWARGS: %(levelname)s - %(message)s"
 
         LoggingConfig.initialize(
-            use_cli_args=False,
-            config_file=str(config_path),
-            log_format=kwargs_format,
-            colored_console=False
+            use_cli_args=False, config_file=str(config_path), log_format=kwargs_format, colored_console=False
         )
 
         logger = get_logger("test_priority")

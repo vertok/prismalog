@@ -87,64 +87,44 @@ class LoggingArgumentParser:
             parser = argparse.ArgumentParser()
 
         # Config file option
-        parser.add_argument(
-            "--log-config",
-            help="Path to a YAML configuration file"
-        )
+        parser.add_argument("--log-config", help="Path to a YAML configuration file")
 
         # Standard logging arguments with case-insensitive level
         parser.add_argument(
             "--log-level",
             choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
             type=str.upper,  # Simply convert to uppercase
-            help="Set the default logging level (case-insensitive)"
+            help="Set the default logging level (case-insensitive)",
         )
 
-        parser.add_argument(
-            "--log-dir",
-            help="Directory where log files will be stored"
-        )
+        parser.add_argument("--log-dir", help="Directory where log files will be stored")
 
-        parser.add_argument(
-            "--log-format",
-            help="Format string for log messages"
-        )
+        parser.add_argument("--log-format", help="Format string for log messages")
 
         # Boolean flags
         parser.add_argument(
-            "--no-color", "--no-colors",
+            "--no-color",
+            "--no-colors",
             dest="colored_console",
             action="store_false",
-            help="Disable colored console output"
+            help="Disable colored console output",
         )
 
         parser.add_argument(
-            "--disable-rotation",
-            dest="disable_rotation",
-            action="store_true",
-            help="Disable log file rotation"
+            "--disable-rotation", dest="disable_rotation", action="store_true", help="Disable log file rotation"
         )
 
         parser.add_argument(
             "--no-exit-on-critical",
             dest="exit_on_critical",
             action="store_false",
-            help="Don't exit program on critical errors"
+            help="Don't exit program on critical errors",
         )
 
         # Numeric options
-        parser.add_argument(
-            "--rotation-size",
-            type=int,
-            dest="rotation_size_mb",
-            help="Log file rotation size in MB"
-        )
+        parser.add_argument("--rotation-size", type=int, dest="rotation_size_mb", help="Log file rotation size in MB")
 
-        parser.add_argument(
-            "--backup-count",
-            type=int,
-            help="Number of backup log files to keep"
-        )
+        parser.add_argument("--backup-count", type=int, help="Number of backup log files to keep")
 
         return parser
 
@@ -175,15 +155,15 @@ class LoggingArgumentParser:
         """
         # Define mappings from CLI arg names to config keys
         key_mappings = {
-            'log_level': 'default_level',
-            'log_config': 'config_file',
-            'log_dir': 'log_dir',
-            'log_format': 'log_format',
-            'colored_console': 'colored_console',
-            'disable_rotation': 'disable_rotation',
-            'exit_on_critical': 'exit_on_critical',
-            'rotation_size_mb': 'rotation_size_mb',
-            'backup_count': 'backup_count'
+            "log_level": "default_level",
+            "log_config": "config_file",
+            "log_dir": "log_dir",
+            "log_format": "log_format",
+            "colored_console": "colored_console",
+            "disable_rotation": "disable_rotation",
+            "exit_on_critical": "exit_on_critical",
+            "rotation_size_mb": "rotation_size_mb",
+            "backup_count": "backup_count",
         }
 
         # Convert args to dictionary

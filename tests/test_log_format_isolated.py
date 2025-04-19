@@ -9,13 +9,14 @@ from pathlib import Path
 from unittest import TestCase
 from prismalog.log import LoggingConfig, get_logger, ColoredLogger
 
+
 @pytest.mark.usefixtures("tmp_path")
 class TestLogFormattingIsolated(TestCase):
     """Isolated test suite for log formatting issues."""
 
     # Add color code constants
-    ANSI_GREEN = '\x1b[92m'
-    ANSI_RESET = '\x1b[0m'
+    ANSI_GREEN = "\x1b[92m"
+    ANSI_RESET = "\x1b[0m"
 
     def setUp(self):
         """Set up test environment."""
@@ -23,7 +24,7 @@ class TestLogFormattingIsolated(TestCase):
         logging.root.handlers = []
         # Clear environment variables
         for k in list(os.environ):
-            if k.startswith('LOG_'):
+            if k.startswith("LOG_"):
                 del os.environ[k]
         # Reset logging config
         LoggingConfig.reset()
@@ -202,11 +203,7 @@ class TestLogFormattingIsolated(TestCase):
             LoggingConfig.reset()
 
             # Initialize with test configuration
-            LoggingConfig.initialize(
-                use_cli_args=False,
-                log_dir=log_dir,
-                log_format="%(levelname)s - %(message)s"
-            )
+            LoggingConfig.initialize(use_cli_args=False, log_dir=log_dir, log_format="%(levelname)s - %(message)s")
 
             # Verify config
             config = LoggingConfig.get_config()
@@ -225,7 +222,7 @@ class TestLogFormattingIsolated(TestCase):
                 print(f"\nHandler {idx + 1}:")
                 print(f"Type: {type(handler)}")
                 print(f"Level: {handler.level}")
-                if hasattr(handler, 'baseFilename'):
+                if hasattr(handler, "baseFilename"):
                     print(f"Base filename: {handler.baseFilename}")
                     print(f"Mode: {handler.mode}")
                     print(f"Encoding: {handler.encoding}")
@@ -254,7 +251,7 @@ class TestLogFormattingIsolated(TestCase):
 
             if not log_files:
                 print("\nFile Handler Status:")
-                if hasattr(ColoredLogger, '_file_handler'):
+                if hasattr(ColoredLogger, "_file_handler"):
                     fh = ColoredLogger._file_handler
                     print(f"File handler exists: {fh is not None}")
                     if fh:
@@ -283,7 +280,7 @@ class TestLogFormattingIsolated(TestCase):
             print(f"Type: {type(handler)}")
             print(f"Level: {handler.level}")
             print(f"Formatter: {type(handler.formatter)}")
-            if hasattr(handler, 'stream'):
+            if hasattr(handler, "stream"):
                 print(f"Stream type: {type(handler.stream)}")
 
         assert len(logger.handlers) >= 2, "Logger should have at least console and file handlers"
@@ -293,7 +290,7 @@ class TestLogFormattingIsolated(TestCase):
         """Test the exact mechanics of output capture."""
         # Create both a string buffer and file for comparison
         string_output = io.StringIO()
-        temp_file = tempfile.NamedTemporaryFile(mode='w+', delete=False)
+        temp_file = tempfile.NamedTemporaryFile(mode="w+", delete=False)
 
         try:
             # Create handlers for both outputs
