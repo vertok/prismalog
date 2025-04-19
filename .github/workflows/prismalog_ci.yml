@@ -149,21 +149,20 @@ jobs:
       # Step 12: Test GitHub secrets integration
       - name: Test with GitHub Secrets Environment
         env:
-          GITHUB_LOG_DIR: ./github-action-logs
-          GITHUB_LOG_LEVEL: DEBUG
+          LOG_DIR: ./github-action-logs
+          LOG_LEVEL: DEBUG
         run: |
           python -c "
           from prismalog import get_logger, LoggingConfig
-          LoggingConfig.initialize()
+          LoggingConfig.initialize(use_env_vars=True)  # Explicitly use env vars
           logger = get_logger('github_test')
           logger.info('Testing GitHub secrets integration')
           log_dir = LoggingConfig.get('log_dir')
           level = LoggingConfig.get('default_level')
-          import os
           print(f'Log directory: {log_dir}')
           print(f'Log level: {level}')
-          assert log_dir == './github-action-logs', 'GitHub secret not applied'
-          assert level == 'DEBUG', 'GitHub secret not applied'
+          assert log_dir == './github-action-logs', f'GitHub secret not applied. Got {log_dir}'
+          assert level == 'DEBUG', f'GitHub secret not applied. Got {level}'
           print('GitHub secrets integration working correctly')
           "
           echo "## GitHub Secrets Integration: Passed" >> $GITHUB_STEP_SUMMARY
