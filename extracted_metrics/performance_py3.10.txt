@@ -1,6 +1,6 @@
 
 ============================================================
-COLORED LOGGER PERFORMANCE TEST - 2025-04-20 13:39:08
+COLORED LOGGER PERFORMANCE TEST - 2025-04-20 13:47:53
 ============================================================
 • Processes: 4
 • Messages per level per process: 1200
@@ -8,23 +8,23 @@ COLORED LOGGER PERFORMANCE TEST - 2025-04-20 13:39:08
 ============================================================
 
 Initial memory usage: 16.04 MB
-Log file: /home/runner/work/prismalog/prismalog/logs/app_2025-04-20_13-39-08_8323.log
+Log file: /home/runner/work/prismalog/prismalog/logs/app_2025-04-20_13-47-53_3489.log
 
 Starting worker processes...
-• Started worker 1/4 (PID: 2126)
-• Started worker 2/4 (PID: 2127)
-2025-04-20 13:39:08,326 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Warm-up message
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Warm-up message
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Warm-up message
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Warm-up message
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Warm-up message
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Debug message 0 from process 2126
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Debug message 1 from process 2126
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Debug message 2 from process 2126
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Debug message 3 from process 2126
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Debug message 4 from process 2126
-• Started worker 3/4 (PID: 2128)
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Debug message 5 from process 2126
-2025-04-20 13:39:08,327 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Debug message 6 from process 2126
-2025-04-20 13:39:08,328 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Debug message 7 from process 2126
-2025-04-20 13:39:08,328 - log.py - perf_worker_2126 - [[94mDEBUG[0m] - Debug message 8 from process 2126
+• Started worker 1/4 (PID: 2014)
+• Started worker 2/4 (PID: 2015)
+2025-04-20 13:47:53,493 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Warm-up message
+2025-04-20 13:47:53,493 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Warm-up message
+2025-04-20 13:47:53,493 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Warm-up message
+2025-04-20 13:47:53,493 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Warm-up message
+2025-04-20 13:47:53,493 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Warm-up message
+• Started worker 3/4 (PID: 2016)
+2025-04-20 13:47:53,493 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Debug message 0 from process 2014
+2025-04-20 13:47:53,493 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Debug message 1 from process 2014
+2025-04-20 13:47:53,494 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Debug message 2 from process 2014
+2025-04-20 13:47:53,494 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Debug message 3 from process 2014
+2025-04-20 13:47:53,494 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Debug message 4 from process 2014
+2025-04-20 13:47:53,494 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Debug message 5 from process 2014
+2025-04-20 13:47:53,494 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Debug message 6 from process 2014
+2025-04-20 13:47:53,494 - log.py - perf_worker_2015 - [[94mDEBUG[0m] - Warm-up message
+2025-04-20 13:47:53,494 - log.py - perf_worker_2014 - [[94mDEBUG[0m] - Debug message 7 from process 2014
