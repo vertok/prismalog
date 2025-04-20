@@ -36,9 +36,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip wheel setuptools
           # Install package in development mode with all extras
-          pip install -e ".[dev,test,ci,doc]"
-          # Explicitly install PyYAML to ensure it's available
-          python -m pip install PyYAML
+          pip install -e ".[all]"
 
       # Step 4: Run unit tests
       - name: Run unit tests
@@ -55,20 +53,15 @@ jobs:
             --self-contained-html \
             --junitxml=junit/test-results.xml || echo "::warning::Tests had failures"
 
-      - name: Debug reports directory after pytest
-        run: |
-          echo "Contents of reports/html after pytest:"
-          find reports/html
-          ls -l reports/html/pytest_report_3.8.html || true
-          head -20 reports/html/pytest_report_3.8.html || true
-
       # Step 5: Test multiprocessing capability
       - name: Test multiprocessing capability
+        if: matrix.python-version == '3.10'
         run: |
           python example/log_sequence_test.py
 
       # Step 6: Test logging performance
       - name: Test logging performance
+        if: matrix.python-version == '3.10'
         run: |
           python benchmark/performance_test_multiprocessing.py > reports/performance_py${{ matrix.python-version }}.txt
           MSGS_PER_SEC=$(grep -oP '(?<=Messages per second: )[0-9.]+' reports/performance_py${{ matrix.python-version }}.txt || echo "0")
@@ -87,13 +80,13 @@ jobs:
         run: |
           mkdir -p reports/badges
           COVERAGE="0.0"
-          
+
           # Check if coverage.xml exists and extract the line-rate properly
           if [ -f coverage.xml ]; then
             # Extract coverage data more reliably
             COVERAGE=$(python -c "import xml.etree.ElementTree as ET; root = ET.parse('coverage.xml').getroot(); print(root.get('line-rate', '0.0'))")
             echo "Found raw coverage value: $COVERAGE"
-            
+
             # Verify the extracted data
             if [[ ! $COVERAGE =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
               echo "Warning: Invalid coverage data extracted, using default"
@@ -102,21 +95,21 @@ jobs:
           else
             echo "Warning: coverage.xml file not found"
           fi
-          
+
           # Calculate percentage
           COVERAGE_PCT=$(python -c "print(round(float('$COVERAGE') * 100, 1))")
           echo "Calculated coverage percentage: $COVERAGE_PCT%"
-          
+
           # Determine color
           COLOR=$(python -c "c=float('$COVERAGE_PCT'); print('red' if c < 50 else 'yellow' if c < 80 else 'green')")
-          
+
           # Store in environment and summary
           echo "COVERAGE_PCT=$COVERAGE_PCT" >> $GITHUB_ENV
           echo "## Test Coverage: $COVERAGE_PCT%" >> $GITHUB_STEP_SUMMARY
-          
+
           # Generate badge
           anybadge --label="coverage-py${{ matrix.python-version }}" --value=$COVERAGE_PCT --file=reports/badges/coverage-py${{ matrix.python-version }}.svg --suffix=% 50=red 60=orange 80=yellow 100=green
-          
+
           # Verify badge was created
           ls -la reports/badges/
 
@@ -162,12 +155,39 @@ jobs:
           </html>
           EOF
 
-      # Step 10: Run code style checks (Black and Flake8)
+      # Step 10: Run code style checks (Black and Flake8) and create badges
       - name: Run code style checks
         continue-on-error: true
         run: |
-          python -m black --check prismalog tests || echo "::warning::Black formatting check failed"
+          # Run black check and store exit code
+          python -m black --check prismalog tests
+          BLACK_EXIT=$?
+          if [ $BLACK_EXIT -eq 0 ]; then
+            BLACK_STATUS="passing"
+            BLACK_COLOR="green"
+          else
+            BLACK_STATUS="failing"
+            BLACK_COLOR="red"
+            echo "::warning::Black formatting check failed"
+          fi
+
+          # Run flake8 and store exit code
           python -m flake8 prismalog --count --select=E9,F63,F7,F82 --show-source --statistics
+          FLAKE_EXIT=$?
+          if [ $FLAKE_EXIT -eq 0 ]; then
+            FLAKE_STATUS="passing"
+            FLAKE_COLOR="green"
+          else
+            FLAKE_STATUS="failing"
+            FLAKE_COLOR="red"
+          fi
+
+          # Generate badges
+          anybadge --label="black" --value=$BLACK_STATUS --file=reports/badges/black-py${{ matrix.python-version }}.svg --color=$BLACK_COLOR
+          anybadge --label="flake8" --value=$FLAKE_STATUS --file=reports/badges/flake8-py${{ matrix.python-version }}.svg --color=$FLAKE_COLOR
+
+          # List generated badges
+          ls -la reports/badges/
 
       # Step 11: Check memory footprint
       - name: Check memory footprint
@@ -292,6 +312,24 @@ jobs:
             <div class="card">
               <h2>Coverage Report</h2>
               <p><a href="../../htmlcov/index.html">HTML Coverage Report</a></p>
+            </div>
+
+            <div class="card">
+              <h2>Code Quality Badges (Markdown)</h2>
+              <p class="markdown-badges">
+                <a href="reports/html/3.8/index.html"><img src="badges/coverage-py3.8.svg" alt="Coverage Python 3.8"></a>
+                <a href="reports/html/3.8/reports/pylint/pylint-py3.8.html"><img src="badges/pylint-py3.8.svg" alt="Pylint Python 3.8"></a>
+                <a href="reports/html/3.8/index.html"><img src="badges/black-py3.8.svg" alt="Black Python 3.8"></a>
+                <a href="reports/html/3.8/index.html"><img src="badges/flake8-py3.8.svg" alt="Flake8 Python 3.8"></a>
+                <a href="reports/html/3.10/index.html"><img src="badges/coverage-py3.10.svg" alt="Coverage Python 3.10"></a>
+                <a href="reports/html/3.10/reports/pylint/pylint-py3.10.html"><img src="badges/pylint-py3.10.svg" alt="Pylint Python 3.10"></a>
+                <a href="reports/html/3.10/index.html"><img src="badges/black-py3.10.svg" alt="Black Python 3.10"></a>
+                <a href="reports/html/3.10/index.html"><img src="badges/flake8-py3.10.svg" alt="Flake8 Python 3.10"></a>
+                <a href="reports/html/3.11/index.html"><img src="badges/coverage-py3.11.svg" alt="Coverage Python 3.11"></a>
+                <a href="reports/html/3.11/reports/pylint/pylint-py3.11.html"><img src="badges/pylint-py3.11.svg" alt="Pylint Python 3.11"></a>
+                <a href="reports/html/3.11/index.html"><img src="badges/black-py3.11.svg" alt="Black Python 3.11"></a>
+                <a href="reports/html/3.11/index.html"><img src="badges/flake8-py3.11.svg" alt="Flake8 Python 3.11"></a>
+              </p>
             </div>
 
             <p class="timestamp">Generated: $(date -u "+%Y-%m-%d %H:%M:%S UTC")</p>
@@ -488,10 +526,16 @@ jobs:
               <p class="markdown-badges">
                 <a href="reports/html/3.8/index.html"><img src="badges/coverage-py3.8.svg" alt="Coverage Python 3.8"></a>
                 <a href="reports/html/3.8/reports/pylint/pylint-py3.8.html"><img src="badges/pylint-py3.8.svg" alt="Pylint Python 3.8"></a>
+                <a href="reports/html/3.8/index.html"><img src="badges/black-py3.8.svg" alt="Black Python 3.8"></a>
+                <a href="reports/html/3.8/index.html"><img src="badges/flake8-py3.8.svg" alt="Flake8 Python 3.8"></a>
                 <a href="reports/html/3.10/index.html"><img src="badges/coverage-py3.10.svg" alt="Coverage Python 3.10"></a>
                 <a href="reports/html/3.10/reports/pylint/pylint-py3.10.html"><img src="badges/pylint-py3.10.svg" alt="Pylint Python 3.10"></a>
+                <a href="reports/html/3.10/index.html"><img src="badges/black-py3.10.svg" alt="Black Python 3.10"></a>
+                <a href="reports/html/3.10/index.html"><img src="badges/flake8-py3.10.svg" alt="Flake8 Python 3.10"></a>
                 <a href="reports/html/3.11/index.html"><img src="badges/coverage-py3.11.svg" alt="Coverage Python 3.11"></a>
                 <a href="reports/html/3.11/reports/pylint/pylint-py3.11.html"><img src="badges/pylint-py3.11.svg" alt="Pylint Python 3.11"></a>
+                <a href="reports/html/3.11/index.html"><img src="badges/black-py3.11.svg" alt="Black Python 3.11"></a>
+                <a href="reports/html/3.11/index.html"><img src="badges/flake8-py3.11.svg" alt="Flake8 Python 3.11"></a>
               </p>
             </div>
           </body>
@@ -525,6 +569,8 @@ jobs:
                 <h2>Code Quality</h2>
                 <div class="badge"><img src="../../../badges/pylint-py$version.svg" alt="Pylint Score"></div>
                 <div class="badge"><img src="../../../badges/coverage-py$version.svg" alt="Coverage"></div>
+                <div class="badge"><img src="../../../badges/black-py$version.svg" alt="Black Format"></div>
+                <div class="badge"><img src="../../../badges/flake8-py$version.svg" alt="Flake8"></div>
                 <ul>
                   <li><a href="reports/pylint/pylint-py$version.html">View Detailed Pylint Report</a></li>
                 </ul>
