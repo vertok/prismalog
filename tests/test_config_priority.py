@@ -12,17 +12,17 @@ Tests:
 4. Environment variables with lower priority than CLI/YAML
 """
 
+import argparse
 import os
 import sys
 import tempfile
-import argparse
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from prismalog.log import LoggingConfig, get_logger
 from prismalog.argparser import extract_logging_args, get_argument_parser
+from prismalog.log import LoggingConfig, get_logger
 
 
 def create_test_config(config_content):

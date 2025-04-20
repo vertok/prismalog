@@ -1,9 +1,11 @@
 """Tests for edge cases in prismalog using pytest style."""
 
-import os
-import pytest
 import logging
-from prismalog.log import ColoredLogger, ColoredFormatter, LoggingConfig, get_logger
+import os
+
+import pytest
+
+from prismalog.log import ColoredFormatter, ColoredLogger, LoggingConfig, get_logger
 
 
 @pytest.fixture

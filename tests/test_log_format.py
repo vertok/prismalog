@@ -8,14 +8,15 @@ including:
 - Setting format via direct kwargs
 """
 
+import io
+import logging
 import os
 import re
-import tempfile
-import io
 import sys
-import logging
-from pathlib import Path
+import tempfile
 import time
+from pathlib import Path
+
 import pytest
 
 from prismalog.log import LoggingConfig, get_logger

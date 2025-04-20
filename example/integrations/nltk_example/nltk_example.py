@@ -24,14 +24,20 @@ Usage:
     python nltk_example.py --log-level DEBUG
 """
 
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from logging import Logger
+    from prismalog.log import ColoredLogger
+
 import nltk  # type: ignore
 from nltk.tokenize import word_tokenize  # type: ignore
 
-from prismalog.log import LoggingConfig, get_logger
 from prismalog.argparser import extract_logging_args, get_argument_parser
+from prismalog.log import LoggingConfig, get_logger
 
 
-def download_nltk_data(logger) -> bool:
+def download_nltk_data(logger: Union["Logger", "ColoredLogger"]) -> bool:
     """
     Download NLTK data with logging configuration from config file or CLI args.
 
@@ -41,7 +47,7 @@ def download_nltk_data(logger) -> bool:
     # Log configuration info
     config_file = LoggingConfig.get("config_file", None)
     if config_file:
-        logger.info(f"Using configuration from: {config_file}")
+        logger.info("Using configuration from: %s", config_file)
     else:
         logger.info("Using default configuration")
 

@@ -6,7 +6,7 @@ https://github.com/vertok/prismalog
 from typing import Optional
 
 from .config import LoggingConfig
-from .log import ColoredLogger, ColoredFormatter, MultiProcessingLog, CriticalExitHandler, get_logger
+from .log import ColoredFormatter, ColoredLogger, CriticalExitHandler, MultiProcessingLog, get_logger
 
 
 def setup_logging(config_file: Optional[str] = None, use_cli_args: bool = True) -> dict:

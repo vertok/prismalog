@@ -20,9 +20,11 @@ Usage:
     # Run with custom configuration:
     python example_script.py --log-config path/to/config.yaml
 
-    # Run with critical messages allowed (no exit):
-    python example_script.py --no-exit-on-critical
+    # Run with critical messages allowed to exit:
+    python example_script.py --exit-on-critical
 """
+
+from time import sleep
 
 from prismalog.argparser import extract_logging_args, get_argument_parser
 from prismalog.log import LoggingConfig, get_logger
@@ -47,10 +49,12 @@ def main() -> None:
 
     # Create logger
     logger = get_logger("example")
+    exit_on_critical = logging_args.get("exit_on_critical", True)
+    log_level = logging_args.get("default_level", "INFO")
 
     # Example usage - show current settings
-    logger.info(f"Current log level: {logging_args.get('default_level', 'INFO')}")
-    logger.info(f"Exit on critical: {not logging_args.get('exit_on_critical', True)}")
+    logger.info("Current log level: %s", log_level)
+    logger.info("Exit on critical: %s", exit_on_critical)
 
     # Demonstrate different log levels
     logger.debug("This is a debug message")
@@ -59,13 +63,18 @@ def main() -> None:
     logger.error("This is an error message")
 
     # Warn user about potential program termination
-    if logging_args.get("exit_on_critical", True):
-        logger.warning("About to log a CRITICAL message which will terminate the program")
-        logger.warning("(Use --no-exit-on-critical to prevent termination)")
+    if exit_on_critical:
+        logger.info("\nAbout to log a CRITICAL message, which will terminate the program")
+        logger.info("This happens because you used: --exit-on-critical")
+        sleep(1)
+        logger.critical("This is a CRITICAL message - program will exit now")
     else:
-        logger.info("Program will continue after critical message")
+        logger.info("\nCRITICAL messages won't terminate the program (default behavior)")
+        logger.critical("This is a CRITICAL message - program continues")
+        logger.info("Program completed successfully")
+        logger.info("To change this behavior, use --exit-on-critical")
 
-    # This will terminate the program if exit_on_critical is true
+    # This will not terminate the program since exit_on_critical is false
     logger.critical("This is a critical message")
 
     # These will only be reached if exit_on_critical is false

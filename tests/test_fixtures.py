@@ -3,8 +3,10 @@
 import logging
 import os
 from pathlib import Path
+
 import pytest
-from prismalog.log import LoggingConfig, CriticalExitHandler, get_logger, ColoredLogger
+
+from prismalog.log import ColoredLogger, CriticalExitHandler, LoggingConfig, get_logger
 
 
 def test_session_setup():

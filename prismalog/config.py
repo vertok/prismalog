@@ -107,7 +107,7 @@ class LoggingConfig:
         "log_format": "%(asctime)s - %(filename)s - %(name)s - [%(levelname)s] - %(message)s",
         "colored_console": True,
         "disable_rotation": False,
-        "exit_on_critical": True,  # Whether to exit the program on critical logs
+        "exit_on_critical": False,  # Whether to exit the program on critical logs
         "test_mode": False,  # Whether the logger is running in test mode
     }
 

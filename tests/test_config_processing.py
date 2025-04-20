@@ -5,15 +5,16 @@ This module tests how different types of configuration values are processed
 from various sources including environment variables, command-line arguments, and configuration files.
 """
 
+import argparse
+import io
+import logging
 import os
 import re
-import tempfile
-import io
 import sys
-import logging
-import pytest
-import argparse
+import tempfile
 from unittest.mock import patch
+
+import pytest
 
 from prismalog.log import LoggingConfig, get_logger
 

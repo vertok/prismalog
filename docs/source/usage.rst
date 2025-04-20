@@ -50,8 +50,8 @@ Common Arguments
 --log-config FILE
     Use a YAML configuration file for logging settings
 
---no-exit-on-critical
-    Prevent program termination on critical errors
+--exit-on-critical
+    Terminate program on critical errors
 
 --no-color
     Disable colored console output
@@ -84,7 +84,7 @@ YAML Configuration:
    log_dir: logs
    rotation_size_mb: 10
    backup_count: 5
-   exit_on_critical: true
+   exit_on_critical: false
 
    # Control third-party libraries
    external_loggers:

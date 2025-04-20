@@ -2,12 +2,14 @@ import io
 import logging
 import os
 import sys
-import time
-import pytest
 import tempfile
+import time
 from pathlib import Path
 from unittest import TestCase
-from prismalog.log import LoggingConfig, get_logger, ColoredLogger
+
+import pytest
+
+from prismalog.log import ColoredLogger, LoggingConfig, get_logger
 
 
 @pytest.mark.usefixtures("tmp_path")

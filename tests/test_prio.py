@@ -8,10 +8,11 @@ configuration from YAML files.
 
 import os
 import tempfile
+
 import pytest
 
-from prismalog.log import LoggingConfig, get_logger
 from prismalog.argparser import extract_logging_args, get_argument_parser
+from prismalog.log import LoggingConfig, get_logger
 
 
 class TestConfigPriority:
@@ -98,6 +99,7 @@ class TestConfigPriority:
             "override_logs",  # Should override YAML's yaml_logs
             "--log-config",
             yaml_config_file,  # Load the YAML config too
+            "--exit-on-critical",  # Should override YAML's exit_on_critical
         ]
         args = parser.parse_args(cli_args)
         logging_args = extract_logging_args(args)
@@ -113,7 +115,7 @@ class TestConfigPriority:
         print(f"Log level: {level} (should be INFO, not ERROR)")
         print(f"Log dir: {log_dir} (should be override_logs, not yaml_logs)")
         print(f"Colored console: {colored} (should be False from YAML)")
-        print(f"Exit on critical: {exit_critical} (should be False from YAML)")
+        print(f"Exit on critical: {exit_critical} (should be True from CLI)")
 
         # CLI args should take precedence
         assert level == "INFO", f"Expected INFO level, got {level}"

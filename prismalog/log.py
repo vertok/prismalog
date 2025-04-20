@@ -683,7 +683,7 @@ class ColoredLogger:
         """
         Logs a critical message.
 
-        Note: If exit_on_critical=True in config (default), this will terminate the program.
+        Note: If exit_on_critical=True in config, this will terminate the program.
 
         Args:
             msg: The message to log

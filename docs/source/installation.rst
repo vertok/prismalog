@@ -77,8 +77,8 @@ Configure logging using command-line arguments:
     # Use configuration file
     python your_script.py --log-config config.yaml
 
-    # Disable exit on critical errors
-    python your_script.py --no-exit-on-critical
+    # Activate exit on critical errors
+    python your_script.py --exit-on-critical
 
     # Disable colored output
     python your_script.py --no-color
@@ -97,8 +97,8 @@ Available Arguments
 --log-config FILE
     Use YAML configuration file
 
---no-exit-on-critical
-    Prevent program termination on critical errors
+--exit-on-critical
+    Terminate program on critical errors
 
 --no-color
     Disable colored console output

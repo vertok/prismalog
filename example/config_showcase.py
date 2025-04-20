@@ -25,8 +25,8 @@ Usage:
   # Custom log format:
   python config_showcase.py --log-format "%(asctime)s [%(levelname)s] %(message)s"
 
-  # Disable exit on critical:
-  python config_showcase.py --no-exit-on-critical
+  # Activate exit on critical:
+  python config_showcase.py --exit-on-critical
 
   # Customize log directory:
   python config_showcase.py --log-dir ./my_logs
@@ -36,10 +36,11 @@ import os
 from time import sleep
 
 from prismalog import LoggingConfig, get_logger
-from prismalog.argparser import get_argument_parser, extract_logging_args
+from prismalog.argparser import extract_logging_args, get_argument_parser
 
 
-def main():
+def main() -> None:
+    """Main function to demonstrate prismalog configuration keys."""
     # Get the standard argument parser
     parser = get_argument_parser(description="prismalog Configuration Showcase")
 
@@ -103,7 +104,7 @@ def main():
     exit_on_critical = LoggingConfig.get("exit_on_critical")
     log.info(f"8. exit_on_critical = {exit_on_critical}")
     log.info(f"   Whether to terminate the program on critical logs")
-    log.info(f"   Set with: --no-exit-on-critical to disable")
+    log.info(f"   Set with: --exit-on-critical to activate")
 
     # 9. test_mode - For testing the logger itself
     test_mode = LoggingConfig.get("test_mode")
@@ -124,13 +125,14 @@ def main():
     # Demonstrate exit_on_critical
     if exit_on_critical:
         log.info("\nAbout to log a CRITICAL message, which will terminate the program")
-        log.info("To prevent termination, run with: --no-exit-on-critical")
-        sleep(1)  # Give user time to read
+        log.info("This happens because you used: --exit-on-critical")
+        sleep(1)
         log.critical("This is a CRITICAL message - program will exit now")
     else:
-        log.info("\nCRITICAL messages won't terminate the program (--no-exit-on-critical was used)")
+        log.info("\nCRITICAL messages won't terminate the program (default behavior)")
         log.critical("This is a CRITICAL message - program continues")
         log.info("Program completed successfully")
+        log.info("To change this behavior, use --exit-on-critical")
 
 
 if __name__ == "__main__":

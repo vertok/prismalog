@@ -242,7 +242,7 @@ class TestLoggingConfig:
         """Test that default values are used when no other sources are specified."""
         LoggingConfig.reset()
         LoggingConfig.initialize(config_file=None, use_cli_args=False)
-        assert LoggingConfig.get("exit_on_critical") is True
+        assert LoggingConfig.get("exit_on_critical") is False
 
     def test_type_conversion_for_booleans(self):
         """Test boolean type conversion from different string representations."""

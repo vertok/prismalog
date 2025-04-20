@@ -22,7 +22,7 @@ Available Arguments:
 --log-format           Format string for log messages
 --no-color             Disable colored console output
 --disable-rotation     Disable log file rotation
---no-exit-on-critical  Don't exit program on critical errors
+--exit-on-critical     Exit program on critical errors
 --rotation-size        Log file rotation size in MB
 --backup-count         Number of backup log files to keep
 
@@ -64,7 +64,7 @@ Usage Examples:
 """
 
 import argparse
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 
 class LoggingArgumentParser:
@@ -113,10 +113,10 @@ class LoggingArgumentParser:
         )
 
         parser.add_argument(
-            "--no-exit-on-critical",
+            "--exit-on-critical",
             dest="exit_on_critical",
-            action="store_false",
-            help="Don't exit program on critical errors",
+            action="store_true",
+            help="Exit the program on critical errors",
         )
 
         # Numeric options
