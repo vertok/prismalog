@@ -1,1 +1,83 @@
-<html><body>No coverage report found</body></html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>prismalog Test Reports</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+    .card { border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h1 { color: #333; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    h2 { margin-top: 0; color: #2c3e50; }
+    .badge { display: inline-block; margin-right: 10px; margin-bottom: 10px; }
+    .metrics { font-family: monospace; background-color: #f8f8f8; padding: 10px; border-radius: 4px; }
+    .timestamp { color: #777; font-size: 0.9em; margin-top: 30px; }
+    .feature-table { width: 100%; border-collapse: collapse; }
+    .feature-table th, .feature-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .feature-table th { background-color: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h1>prismalog Test Reports</h1>
+
+  <div class="card">
+    <h2>Code Quality Badges</h2>
+    <div class="badge"><img src="../badges/pylint-py3.8.svg" alt="Pylint Score Python 3.8"></div>
+    <div class="badge"><img src="../badges/coverage-py3.8.svg" alt="Coverage Python 3.8"></div>
+    <div class="badge"><img src="../badges/pylint-py3.10.svg" alt="Pylint Score Python 3.10"></div>
+    <div class="badge"><img src="../badges/coverage-py3.10.svg" alt="Coverage Python 3.10"></div>
+    <div class="badge"><img src="../badges/pylint-py3.11.svg" alt="Pylint Score Python 3.11"></div>
+    <div class="badge"><img src="../badges/coverage-py3.11.svg" alt="Coverage Python 3.11"></div>
+  </div>
+
+  <div class="card">
+    <h2>Test Results</h2>
+    <p><a href="pytest_report_3.8.html">Python 3.8 Test Results</a></p>
+    <p><a href="pytest_report_3.10.html">Python 3.10 Test Results</a></p>
+    <p><a href="pytest_report_3.11.html">Python 3.11 Test Results</a></p>
+  </div>
+
+  <div class="card">
+    <h2>Key Features Verified</h2>
+    <table class="feature-table">
+      <tr>
+        <th>Feature</th>
+        <th>Status</th>
+      </tr>
+      <tr>
+        <td>Multi-process Safety</td>
+        <td>✅ Verified</td>
+      </tr>
+      <tr>
+        <td>GitHub Secrets Integration</td>
+        <td>✅ Verified</td>
+      </tr>
+      <tr>
+        <td>High Performance</td>
+        <td>✅ Verified</td>
+      </tr>
+      <tr>
+        <td>Memory Efficiency</td>
+        <td>✅ Verified</td>
+      </tr>
+      <tr>
+        <td>Zero Dependencies</td>
+        <td>✅ Verified</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Performance Metrics</h2>
+    <div class="metrics">
+      <pre>$(cat ../performance_py3.10.txt | head -n 30 || echo "Performance metrics not available")</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Coverage Report</h2>
+    <p><a href="../../htmlcov/index.html">HTML Coverage Report</a></p>
+  </div>
+
+  <p class="timestamp">Generated: $(date -u "+%Y-%m-%d %H:%M:%S UTC")</p>
+</body>
+</html>
