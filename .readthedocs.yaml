@@ -14,3 +14,15 @@ python:
 
 sphinx:
   configuration: docs/source/conf.py
+
+# Optionally build docs in additional format
+formats:
+  - pdf
+
+# Install the package and its documentation dependencies
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - doc
