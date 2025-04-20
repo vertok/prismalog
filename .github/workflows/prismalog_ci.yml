@@ -259,17 +259,23 @@ jobs:
               <h2>Code Quality Badges</h2>
               <div class="badge"><img src="../badges/pylint-py3.8.svg" alt="Pylint Score Python 3.8"></div>
               <div class="badge"><img src="../badges/coverage-py3.8.svg" alt="Coverage Python 3.8"></div>
+              <div class="badge"><img src="../badges/black-py3.8.svg" alt="Black Python 3.8"></div>
+              <div class="badge"><img src="../badges/flake8-py3.8.svg" alt="Flake8 Python 3.8"></div>
               <div class="badge"><img src="../badges/pylint-py3.10.svg" alt="Pylint Score Python 3.10"></div>
               <div class="badge"><img src="../badges/coverage-py3.10.svg" alt="Coverage Python 3.10"></div>
+              <div class="badge"><img src="../badges/black-py3.10.svg" alt="Black Python 3.10"></div>
+              <div class="badge"><img src="../badges/flake8-py3.10.svg" alt="Flake8 Python 3.10"></div>
               <div class="badge"><img src="../badges/pylint-py3.11.svg" alt="Pylint Score Python 3.11"></div>
               <div class="badge"><img src="../badges/coverage-py3.11.svg" alt="Coverage Python 3.11"></div>
+              <div class="badge"><img src="../badges/black-py3.11.svg" alt="Black Python 3.11"></div>
+              <div class="badge"><img src="../badges/flake8-py3.11.svg" alt="Flake8 Python 3.11"></div>
             </div>
 
             <div class="card">
               <h2>Test Results</h2>
-              <p><a href="reports/html/3.8/reports/html/pytest_report_3.8.html">Python 3.8 Test Results</a></p>
-              <p><a href="reports/html/3.10/reports/html/pytest_report_3.10.html">Python 3.10 Test Results</a></p>
-              <p><a href="reports/html/3.11/reports/html/pytest_report_3.11.html">Python 3.11 Test Results</a></p>
+              <p><a href="../reports/html/3.8/reports/html/pytest_report_3.8.html">Python 3.8 Test Results</a></p>
+              <p><a href="../reports/html/3.10/reports/html/pytest_report_3.10.html">Python 3.10 Test Results</a></p>
+              <p><a href="../reports/html/3.11/reports/html/pytest_report_3.11.html">Python 3.11 Test Results</a></p>
             </div>
 
             <div class="card">
@@ -314,24 +320,6 @@ jobs:
               <p><a href="../../htmlcov/index.html">HTML Coverage Report</a></p>
             </div>
 
-            <div class="card">
-              <h2>Code Quality Badges (Markdown)</h2>
-              <p class="markdown-badges">
-                <a href="reports/html/3.8/index.html"><img src="badges/coverage-py3.8.svg" alt="Coverage Python 3.8"></a>
-                <a href="reports/html/3.8/reports/pylint/pylint-py3.8.html"><img src="badges/pylint-py3.8.svg" alt="Pylint Python 3.8"></a>
-                <a href="reports/html/3.8/index.html"><img src="badges/black-py3.8.svg" alt="Black Python 3.8"></a>
-                <a href="reports/html/3.8/index.html"><img src="badges/flake8-py3.8.svg" alt="Flake8 Python 3.8"></a>
-                <a href="reports/html/3.10/index.html"><img src="badges/coverage-py3.10.svg" alt="Coverage Python 3.10"></a>
-                <a href="reports/html/3.10/reports/pylint/pylint-py3.10.html"><img src="badges/pylint-py3.10.svg" alt="Pylint Python 3.10"></a>
-                <a href="reports/html/3.10/index.html"><img src="badges/black-py3.10.svg" alt="Black Python 3.10"></a>
-                <a href="reports/html/3.10/index.html"><img src="badges/flake8-py3.10.svg" alt="Flake8 Python 3.10"></a>
-                <a href="reports/html/3.11/index.html"><img src="badges/coverage-py3.11.svg" alt="Coverage Python 3.11"></a>
-                <a href="reports/html/3.11/reports/pylint/pylint-py3.11.html"><img src="badges/pylint-py3.11.svg" alt="Pylint Python 3.11"></a>
-                <a href="reports/html/3.11/index.html"><img src="badges/black-py3.11.svg" alt="Black Python 3.11"></a>
-                <a href="reports/html/3.11/index.html"><img src="badges/flake8-py3.11.svg" alt="Flake8 Python 3.11"></a>
-              </p>
-            </div>
-
             <p class="timestamp">Generated: $(date -u "+%Y-%m-%d %H:%M:%S UTC")</p>
           </body>
           </html>
@@ -349,9 +337,9 @@ jobs:
             coverage.xml
             junit/
 
-      # Step 16: Upload Documentation Artifact (Only on Python 3.11)
+      # Step 16: Upload Documentation Artifact (Only on Python 3.10)
       - name: Upload Documentation Artifact
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.10'
         uses: actions/upload-artifact@v4
         with:
           name: documentation
@@ -440,10 +428,6 @@ jobs:
           path: site/reports/html/3.8
         continue-on-error: true
 
-      - name: Debug pytest report timestamp
-        run: |
-          ls -l site/reports/html/3.8/
-
       - name: Download HTML reports for Python 3.10
         uses: actions/download-artifact@v4
         with:
@@ -458,11 +442,10 @@ jobs:
           path: site/reports/html/3.11
         continue-on-error: true
 
-      # Other artifacts can be downloaded in the same way
       - name: Download coverage HTML
         uses: actions/download-artifact@v4
         with:
-          name: test-reports-3.10  # Use a specific Python version that always runs tests
+          name: test-reports-3.10
           path: site/temp
         continue-on-error: true
 
@@ -587,11 +570,6 @@ jobs:
 
       - name: Copy README to site directory
         run: cp README.md site/
-
-      - name: Show site directory structure
-        run: |
-          echo "==== SITE DIRECTORY STRUCTURE ===="
-          find site
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
