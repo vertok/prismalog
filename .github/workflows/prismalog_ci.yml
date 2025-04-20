@@ -192,13 +192,18 @@ jobs:
       # Step 11: Check memory footprint
       - name: Check memory footprint
         run: |
-          INITIAL_MEM=$(grep -oP '(?<=Initial: )[0-9.]+(?= MB)' reports/performance_py${{ matrix.python-version }}.txt || echo "N/A")
-          FINAL_MEM=$(grep -oP '(?<=Final: )[0-9.]+(?= MB)' reports/performance_py${{ matrix.python-version }}.txt || echo "N/A")
-          DELTA_MEM=$(grep -oP '(?<=Delta: )[0-9.]+(?= MB)' reports/performance_py${{ matrix.python-version }}.txt || echo "N/A")
-          echo "## Memory Usage (Py ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
-          echo "- $INITIAL_MEM MB initial memory" >> $GITHUB_STEP_SUMMARY
-          echo "- $FINAL_MEM MB final memory" >> $GITHUB_STEP_SUMMARY
-          echo "- $DELTA_MEM MB memory increase" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ matrix.python-version }}" == "3.10" ]]; then
+            INITIAL_MEM=$(grep -oP '(?<=Initial: )[0-9.]+(?= MB)' reports/performance_py${{ matrix.python-version }}.txt || echo "N/A")
+            FINAL_MEM=$(grep -oP '(?<=Final: )[0-9.]+(?= MB)' reports/performance_py${{ matrix.python-version }}.txt || echo "N/A")
+            DELTA_MEM=$(grep -oP '(?<=Delta: )[0-9.]+(?= MB)' reports/performance_py${{ matrix.python-version }}.txt || echo "N/A")
+            echo "## Memory Usage (Py ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+            echo "- $INITIAL_MEM MB initial memory" >> $GITHUB_STEP_SUMMARY
+            echo "- $FINAL_MEM MB final memory" >> $GITHUB_STEP_SUMMARY
+            echo "- $DELTA_MEM MB memory increase" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Memory Usage (Py ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+            echo "- Memory metrics only available for Python 3.10" >> $GITHUB_STEP_SUMMARY
+          fi
 
       # Step 12: Test GitHub secrets integration
       - name: Test with GitHub Secrets Environment
@@ -309,15 +314,8 @@ jobs:
             </div>
 
             <div class="card">
-              <h2>Performance Metrics</h2>
-              <div class="metrics">
-                <pre>$(cat ../performance_py${{ matrix.python-version }}.txt | head -n 30 || echo "Performance metrics not available")</pre>
-              </div>
-            </div>
-
-            <div class="card">
               <h2>Coverage Report</h2>
-              <p><a href="../../htmlcov/index.html">HTML Coverage Report</a></p>
+              <p><a href="../htmlcov/index.html">HTML Coverage Report</a></p>
             </div>
 
             <p class="timestamp">Generated: $(date -u "+%Y-%m-%d %H:%M:%S UTC")</p>
@@ -460,6 +458,38 @@ jobs:
           fi
           echo "Report copied on $(date)" > site/htmlcov/timestamp.txt
 
+      # Prepare performance metrics for reports
+      - name: Prepare performance metrics for reports
+        run: |
+          # Create directory for extracted metrics
+          mkdir -p site/extracted_metrics
+
+          # Extract performance metrics from each version's artifacts
+          for version in "3.8" "3.10" "3.11"; do
+            echo "Processing metrics for Python $version..."
+
+            # Look for performance metrics file
+            PERF_FILE=""
+            if [ -f "site/reports/html/$version/reports/performance_py$version.txt" ]; then
+              PERF_FILE="site/reports/html/$version/reports/performance_py$version.txt"
+            elif [ -f "site/reports/html/$version/performance_py$version.txt" ]; then
+              PERF_FILE="site/reports/html/$version/performance_py$version.txt"
+            fi
+
+            # Extract the metrics or create placeholder
+            if [ -n "$PERF_FILE" ]; then
+              echo "Found performance metrics at $PERF_FILE"
+              head -n 30 "$PERF_FILE" > "site/extracted_metrics/performance_py$version.txt"
+            else
+              echo "No performance metrics found for Python $version"
+              if [ "$version" == "3.10" ]; then
+                echo "Performance metrics not available for Python $version (expected for Python 3.10)" > "site/extracted_metrics/performance_py$version.txt"
+              else
+                echo "Performance metrics only collected for Python 3.10" > "site/extracted_metrics/performance_py$version.txt"
+              fi
+            fi
+          done
+
       # Create a consolidated index page that links to all version-specific reports
       - name: Create main index
         run: |
@@ -561,6 +591,12 @@ jobs:
               <div class="card">
                 <h2>Test Results</h2>
                 <p><a href="reports/html/pytest_report_$version.html">View Detailed Test Results</a></p>
+              </div>
+              <div class="card">
+                <h2>Performance Metrics</h2>
+                <div class="metrics">
+                  <pre>$(cat site/extracted_metrics/performance_py$version.txt)</pre>
+                </div>
               </div>
               <p><a href="../../../index.html">Back to main page</a></p>
             </body>
