@@ -417,11 +417,25 @@ jobs:
           path: site/temp
         continue-on-error: true
 
+      - name: Debug coverage artifact contents
+        run: |
+          echo "Contents of site/temp after artifact download:"
+          find site/temp
+
       - name: Move coverage HTML
         run: |
           rm -rf site/htmlcov
+          # Try all possible locations
           if [ -d "site/temp/htmlcov" ]; then
             mv site/temp/htmlcov site/htmlcov
+          elif [ -d "site/temp/reports/htmlcov" ]; then
+            mv site/temp/reports/htmlcov site/htmlcov
+          elif [ -f "site/temp/index.html" ]; then
+            mkdir -p site/htmlcov
+            mv site/temp/* site/htmlcov/
+          else
+            mkdir -p site/htmlcov
+            echo "<html><body>No coverage report found</body></html>" > site/htmlcov/index.html
           fi
           echo "Report copied on $(date)" > site/htmlcov/timestamp.txt
 
