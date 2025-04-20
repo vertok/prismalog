@@ -1,0 +1,30 @@
+
+============================================================
+COLORED LOGGER PERFORMANCE TEST - 2025-04-20 10:49:02
+============================================================
+• Processes: 4
+• Messages per level per process: 1200
+• Batch size for timing: 100
+============================================================
+
+Initial memory usage: 15.91 MB
+Log file: /home/runner/work/prismalog/prismalog/logs/app_2025-04-20_10-49-02_2009.log
+
+Starting worker processes...
+• Started worker 1/4 (PID: 2022)
+• Started worker 2/4 (PID: 2023)
+2025-04-20 10:49:02,013 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Warm-up message
+2025-04-20 10:49:02,013 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Warm-up message
+2025-04-20 10:49:02,013 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Warm-up message
+2025-04-20 10:49:02,013 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Warm-up message
+2025-04-20 10:49:02,013 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Warm-up message
+2025-04-20 10:49:02,013 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Debug message 0 from process 2022
+• Started worker 3/4 (PID: 2024)
+2025-04-20 10:49:02,013 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Debug message 1 from process 2022
+2025-04-20 10:49:02,014 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Debug message 2 from process 2022
+2025-04-20 10:49:02,014 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Debug message 3 from process 2022
+2025-04-20 10:49:02,014 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Debug message 4 from process 2022
+2025-04-20 10:49:02,014 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Debug message 5 from process 2022
+2025-04-20 10:49:02,014 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Debug message 6 from process 2022
+2025-04-20 10:49:02,014 - log.py - perf_worker_2022 - [[94mDEBUG[0m] - Debug message 7 from process 2022
+2025-04-20 10:49:02,014 - log.py - perf_worker_2023 - [[94mDEBUG[0m] - Warm-up message

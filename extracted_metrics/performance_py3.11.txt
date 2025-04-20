@@ -1,0 +1,1 @@
+Performance metrics only collected for Python 3.10
