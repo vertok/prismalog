@@ -313,11 +313,6 @@ jobs:
               </table>
             </div>
 
-            <div class="card">
-              <h2>Coverage Report</h2>
-              <p><a href="../htmlcov/index.html">HTML Coverage Report</a></p>
-            </div>
-
             <p class="timestamp">Generated: $(date -u "+%Y-%m-%d %H:%M:%S UTC")</p>
           </body>
           </html>
@@ -614,60 +609,61 @@ jobs:
           publish_dir: ./site
           keep_files: true
 
-  # publish:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   if: startsWith(github.ref, 'refs/tags/v')
-  #   steps:
-  #     - uses: actions/checkout@v3
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: pypi-publish
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
 
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-  #     - name: Install dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install build twine
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
 
-  #     - name: Build package
-  #       run: python -m build
+      - name: Build package
+        run: python -m build
 
-  #     - name: Publish to PyPI
-  #       env:
-  #         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-  #         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-  #       run: twine upload dist/*
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
 
-  # create-release:
-  #   needs: publish
-  #   runs-on: ubuntu-latest
-  #   if: startsWith(github.ref, 'refs/tags/v')
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
+  create-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  #     - name: Generate release notes
-  #       id: release_notes
-  #       run: |
-  #         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-  #         echo "Generating release notes for $VERSION"
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          echo "Generating release notes for $VERSION"
 
-  #         # Extract changelog entries for this version
-  #         NOTES=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '1d;$d')
+          # Extract changelog entries for this version
+          NOTES=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '1d;$d')
 
-  #         # Format for GitHub release
-  #         echo "notes<<EOF" >> $GITHUB_OUTPUT
-  #         echo "$NOTES" >> $GITHUB_OUTPUT
-  #         echo "EOF" >> $GITHUB_OUTPUT
+          # Format for GitHub release
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-  #     - name: Create GitHub Release
-  #       uses: softprops/action-gh-release@v1
-  #       with:
-  #         files: |
-  #           dist/*
-  #         body: ${{ steps.release_notes.outputs.notes }}
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*
+          body: ${{ steps.release_notes.outputs.notes }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
