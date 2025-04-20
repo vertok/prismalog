@@ -240,9 +240,9 @@ jobs:
 
             <div class="card">
               <h2>Test Results</h2>
-              <p><a href="pytest_report_3.8.html">Python 3.8 Test Results</a></p>
-              <p><a href="pytest_report_3.10.html">Python 3.10 Test Results</a></p>
-              <p><a href="pytest_report_3.11.html">Python 3.11 Test Results</a></p>
+              <p><a href="../reports/html/3.8/reports/html/pytest_report_3.8.html">Python 3.8 Test Results</a></p>
+              <p><a href="../reports/html/3.10/reports/html/pytest_report_3.10.html">Python 3.10 Test Results</a></p>
+              <p><a href="../reports/html/3.11/reports/html/pytest_report_3.11.html">Python 3.11 Test Results</a></p>
             </div>
 
             <div class="card">
@@ -395,6 +395,11 @@ jobs:
           path: site/reports/html/3.8
         continue-on-error: true
 
+      - name: Debug pytest report timestamp
+        run: |
+          ls -l site/reports/html/3.8/reports/html/pytest_report_3.8.html
+          head -20 site/reports/html/3.8/reports/html/pytest_report_3.8.html | grep Report
+
       - name: Download HTML reports for Python 3.10
         uses: actions/download-artifact@v4
         with:
@@ -530,6 +535,11 @@ jobs:
 
       - name: Copy README to site directory
         run: cp README.md site/
+
+      - name: Show site directory structure
+        run: |
+          echo "==== SITE DIRECTORY STRUCTURE ===="
+          find site
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
