@@ -40,19 +40,20 @@ jobs:
           # Explicitly install PyYAML to ensure it's available
           python -m pip install PyYAML
 
-      # Step 4: Run unit tests with coverage
+      # Step 4: Run unit tests
       - name: Run unit tests
         id: pytest
         continue-on-error: true
         run: |
-          mkdir -p junit
           mkdir -p reports/html
+          mkdir -p htmlcov
+          mkdir -p junit
           python -m pytest -m "not slow" tests/ --cov=prismalog \
             --cov-report=xml:coverage.xml \
             --cov-report=html:htmlcov \
             --html=reports/html/pytest_report_${{ matrix.python-version }}.html \
             --self-contained-html \
-            --junitxml=junit/test-results.xml || echo "::set-output name=pytest_failed::true"
+            --junitxml=junit/test-results.xml || echo "::warning::Tests had failures"
 
       # Step 5: Test multiprocessing capability
       - name: Test multiprocessing capability
@@ -291,7 +292,7 @@ jobs:
           </html>
           EOF
 
-      # Step 15: Upload test reports and artifacts
+      # Step 15: Upload test reports
       - name: Upload test reports
         uses: actions/upload-artifact@v4
         if: always()
@@ -299,9 +300,9 @@ jobs:
           name: test-reports-${{ matrix.python-version }}
           path: |
             reports/
-            junit/
             htmlcov/
             coverage.xml
+            junit/
 
       # Step 16: Upload Documentation Artifact (Only on Python 3.11)
       - name: Upload Documentation Artifact
@@ -363,8 +364,10 @@ jobs:
       - name: Create directories
         run: |
           mkdir -p site/badges
-          mkdir -p site/reports/html
           mkdir -p site/htmlcov
+          mkdir -p site/reports/html/3.8
+          mkdir -p site/reports/html/3.10
+          mkdir -p site/reports/html/3.11
 
       # Download version-specific badges and reports
       - name: Download Python 3.8 badges
@@ -416,24 +419,11 @@ jobs:
 
       - name: Move coverage HTML
         run: |
+          rm -rf site/htmlcov
           if [ -d "site/temp/htmlcov" ]; then
-            mkdir -p site/htmlcov
-            cp -r site/temp/htmlcov/* site/htmlcov/
-          elif [ -d "site/temp" ]; then
-            # Debug info
-            echo "Contents of site/temp:"
-            find site/temp -type d | sort
-
-            # Try alternative locations
-            if [ -d "site/temp/reports/html/htmlcov" ]; then
-              mkdir -p site/htmlcov
-              cp -r site/temp/reports/html/htmlcov/* site/htmlcov/
-            fi
-          else
-            echo "No coverage HTML found in downloaded artifacts"
-            mkdir -p site/htmlcov
-            echo "<html><body><h1>Coverage report not available</h1></body></html>" > site/htmlcov/index.html
+            mv site/temp/htmlcov site/htmlcov
           fi
+          echo "Report copied on $(date)" > site/htmlcov/timestamp.txt
 
       # Create a consolidated index page that links to all version-specific reports
       - name: Create main index
