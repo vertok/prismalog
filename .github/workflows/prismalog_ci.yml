@@ -55,6 +55,13 @@ jobs:
             --self-contained-html \
             --junitxml=junit/test-results.xml || echo "::warning::Tests had failures"
 
+      - name: Debug reports directory after pytest
+        run: |
+          echo "Contents of reports/html after pytest:"
+          find reports/html
+          ls -l reports/html/pytest_report_3.8.html || true
+          head -20 reports/html/pytest_report_3.8.html || true
+
       # Step 5: Test multiprocessing capability
       - name: Test multiprocessing capability
         run: |
