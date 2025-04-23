@@ -7,31 +7,31 @@ Python's standard logging with colored output, automatic log rotation, and
 improved handling of critical errors.
 
 Key components:
-- ColoredFormatter: Adds color-coding to console output based on log levels.
-- MultiProcessingLog: Thread-safe and process-safe log handler using a shared
-                      lock and RotatingFileHandler for file output and rotation.
-- CriticalExitHandler: Optional handler that exits the program on critical errors
-                       if configured via LoggingConfig.
-- ColoredLogger: Main logger class wrapping the standard logger, providing
-                 easy access to configured handlers and levels.
-- get_logger: Factory function to obtain properly configured logger instances,
-              handling initialization and configuration application.
+    - ColoredFormatter: Adds color-coding to console output based on log levels.
+    - MultiProcessingLog: Thread-safe and process-safe log handler using a shared
+                          lock and RotatingFileHandler for file output and rotation.
+    - CriticalExitHandler: Optional handler that exits the program on critical errors
+                           if configured via LoggingConfig.
+    - ColoredLogger: Main logger class wrapping the standard logger, providing
+                     easy access to configured handlers and levels.
+    - get_logger: Factory function to obtain properly configured logger instances,
+                  handling initialization and configuration application.
 
 Features:
-- Performance: Optimized for speed, especially when using %(created)f timestamp format.
-               (Note: Performance figures depend heavily on configuration and environment).
-- Colored Console Output: Improves readability using ANSI color codes. Configurable
-                          via LoggingConfig ('colored_console').
-- Automatic Log File Rotation: Based on size ('rotation_size_mb') and backup count
-                               ('backup_count'). Can be disabled ('disable_rotation').
-- Process-Safe & Thread-Safe File Logging: Uses `MultiProcessingLog` with a
-                                           `multiprocessing.Lock` to prevent corruption.
-- Critical Error Handling: Option to exit the application on critical logs via
-                           `CriticalExitHandler` (controlled by 'exit_on_critical').
-- Configurable Verbosity: Set default levels ('default_level') and per-module levels
-                          ('external_loggers') via LoggingConfig.
-- Flexible Configuration: Leverages LoggingConfig for settings from defaults, files,
-                          environment variables, and CLI arguments.
+    - Performance: Optimized for speed, especially when using %(created)f timestamp format.
+                   (Note: Performance figures depend heavily on configuration and environment).
+    - Colored Console Output: Improves readability using ANSI color codes. Configurable
+                              via LoggingConfig ('colored_console').
+    - Automatic Log File Rotation: Based on size ('rotation_size_mb') and backup count
+                                   ('backup_count'). Can be disabled ('disable_rotation').
+    - Process-Safe & Thread-Safe File Logging: Uses `MultiProcessingLog` with a
+                                               `multiprocessing.Lock` to prevent corruption.
+    - Critical Error Handling: Option to exit the application on critical logs via
+                               `CriticalExitHandler` (controlled by 'exit_on_critical').
+    - Configurable Verbosity: Set default levels ('default_level') and per-module levels
+                              ('external_loggers') via LoggingConfig.
+    - Flexible Configuration: Leverages LoggingConfig for settings from defaults, files,
+                              environment variables, and CLI arguments.
 
 Example:
     >>> from prismalog import get_logger, LoggingConfig
