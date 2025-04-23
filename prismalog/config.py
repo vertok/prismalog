@@ -14,7 +14,7 @@ Key features:
 - Singleton pattern to ensure configuration consistency
 
 The configuration system follows this priority order (highest to lowest):
-1. Programmatic settings via direct API calls
+1. Programmatic settings via direct API calls or kwargs to initialize()
 2. Command-line arguments
 3. Configuration files (YAML)
 4. Environment variables (with support for CI/CD environments)
@@ -24,18 +24,35 @@ Environment Variables:
     Standard environment variables use the ``LOG_`` prefix:
 
     - ``LOG_DIR``: Directory for log files
-    - ``LOG_LEVEL``: Default logging level
+    - ``LOG_LEVEL``: Default logging level (e.g., INFO, DEBUG)
     - ``LOG_ROTATION_SIZE``: Size in MB for log rotation
     - ``LOG_BACKUP_COUNT``: Number of backup log files
-    - ``LOG_FORMAT``: Log message format
-    - ``LOG_COLORED_CONSOLE``: Whether to use colored console output
-    - ``LOG_DISABLE_ROTATION``: Whether to disable log rotation
-    - ``LOG_EXIT_ON_CRITICAL``: Whether to exit on critical logs
-    - ``LOG_TEST_MODE``: Whether logger is in test mode
+    - ``LOG_FORMAT``: Log message format string
+    - ``LOG_DATEFMT``: Log message date format string
+    - ``LOG_FILENAME``: Base filename prefix for log files (default: 'app')
+    - ``LOG_COLORED_CONSOLE``: Whether to use colored console output (true/false)
+    - ``LOG_DISABLE_ROTATION``: Whether to disable log rotation (true/false)
+    - ``LOG_EXIT_ON_CRITICAL``: Whether to exit on critical logs (true/false)
+    - ``LOG_TEST_MODE``: Whether logger is in test mode (true/false)
 
     For GitHub Actions, the same variables are supported with ``GITHUB_`` prefix:
 
-    - ``GITHUB_LOG_DIR``, ``GITHUB_LOG_LEVEL``, etc.
+    - ``GITHUB_LOG_DIR``, ``GITHUB_LOG_LEVEL``, ``GITHUB_LOG_FILENAME``, ``GITHUB_LOG_DATEFMT``, etc.
+
+Command-Line Arguments:
+    The following arguments can be parsed if `use_cli_args=True` during initialization:
+
+    - ``--log-config`` / ``--log-conf``: Path to logging configuration file (YAML)
+    - ``--log-level`` / ``--logging-level``: Default logging level (DEBUG, INFO, etc.)
+    - ``--log-dir`` / ``--logging-dir``: Directory for log files
+    - ``--log-format`` / ``--logging-format``: Format string for log messages
+    - ``--log-datefmt`` / ``--logging-datefmt``: Format string for log timestamps
+    - ``--log-filename`` / ``--logging-filename``: Prefix for log filenames
+    - ``--no-color`` / ``--no-colors``: Disable colored console output
+    - ``--disable-rotation``: Disable log file rotation
+    - ``--exit-on-critical``: Exit the program on critical errors
+    - ``--rotation-size``: Log file rotation size in MB
+    - ``--backup-count``: Number of backup log files to keep
 
 Type Conversion:
     String values from configuration files and environment variables are automatically
@@ -48,11 +65,12 @@ Usage examples:
     # Basic initialization with defaults
     LoggingConfig.initialize()
 
-    # Initialization with configuration file
-    LoggingConfig.initialize(config_file="logging_config.yaml")
+    # Initialization with configuration file and CLI args enabled
+    LoggingConfig.initialize(config_file="logging_config.yaml", use_cli_args=True)
 
     # Accessing configuration values
     log_dir = LoggingConfig.get("log_dir")
+    filename_prefix = LoggingConfig.get_filename_prefix()
 
     # Setting configuration values programmatically
     LoggingConfig.set("colored_console", False)
@@ -63,7 +81,7 @@ Usage examples:
 
 import argparse
 import os
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, cast
 
 
 class LoggingConfig:
@@ -105,6 +123,8 @@ class LoggingConfig:
         "rotation_size_mb": 10,
         "backup_count": 5,
         "log_format": "%(asctime)s - %(filename)s - %(name)s - [%(levelname)s] - %(message)s",
+        "datefmt": "%Y-%m-%d %H:%M:%S.%f",
+        "log_filename": "app",  # Default log filename prefix
         "colored_console": True,
         "disable_rotation": False,
         "exit_on_critical": False,  # Whether to exit the program on critical logs
@@ -112,7 +132,7 @@ class LoggingConfig:
     }
 
     _instance = None
-    _config: Dict[str, Any] = {}  # Add type annotation here
+    _config: Dict[str, Any] = {}  # Add type annotation
     _initialized = False
     _debug_mode = False
 
@@ -406,6 +426,8 @@ class LoggingConfig:
             "rotation_size_mb": ["LOG_ROTATION_SIZE", "GITHUB_LOG_ROTATION_SIZE"],
             "backup_count": ["LOG_BACKUP_COUNT", "GITHUB_LOG_BACKUP_COUNT"],
             "log_format": ["LOG_FORMAT", "GITHUB_LOG_FORMAT"],
+            "datefmt": ["LOG_DATEFMT", "GITHUB_LOG_DATEFMT"],
+            "log_filename": ["LOG_FILENAME", "GITHUB_LOG_FILENAME"],
             "colored_console": ["LOG_COLORED_CONSOLE", "GITHUB_LOG_COLORED_CONSOLE"],
             "disable_rotation": ["LOG_DISABLE_ROTATION", "GITHUB_LOG_DISABLE_ROTATION"],
             "exit_on_critical": ["LOG_EXIT_ON_CRITICAL", "GITHUB_LOG_EXIT_ON_CRITICAL"],
@@ -497,6 +519,9 @@ class LoggingConfig:
         - --log-config, --log-conf: Path to logging configuration file
         - --log-level, --logging-level: Default logging level
         - --log-dir, --logging-dir: Directory for log files
+        - --log-format, --logging-format: Format string for log messages
+        - --log-datefmt, --logging-datefmt: Format string for log timestamps
+        - --log-filename, --logging-filename: Prefix for log filenames
 
         Args:
             parser: An existing ArgumentParser to add arguments to
@@ -529,6 +554,20 @@ class LoggingConfig:
             "--logging-format",
             dest="log_format",
             help="Format string for log messages (e.g. '%(asctime)s - %(message)s')",
+        )
+
+        parser.add_argument(
+            "--log-datefmt",
+            "--logging-datefmt",
+            dest="datefmt",
+            help="Format string for log timestamps (e.g. '%%Y-%%m-%%d %%H:%%M:%%S.%%f')",
+        )
+
+        parser.add_argument(
+            "--log-filename",
+            "--logging-filename",
+            dest="log_filename",
+            help="Prefix for log filenames",
         )
 
         return parser
@@ -781,3 +820,14 @@ class LoggingConfig:
         cls.debug_print("LoggingConfig reset to default values")
 
         return cls
+
+    @classmethod
+    def get_filename_prefix(cls) -> str:
+        """
+        Get the configured log filename prefix.
+
+        Returns:
+            The configured prefix string, defaulting to 'app'.
+        """
+        value = cls.get("log_filename", "app")
+        return cast(str, value)

@@ -1,8 +1,7 @@
-import contextlib
-import io
+""" Test suite for log module issues in prismalog. """
+
 import logging
 import os
-import sys
 import time
 from datetime import datetime, timedelta
 from unittest import mock

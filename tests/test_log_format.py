@@ -8,16 +8,10 @@ including:
 - Setting format via direct kwargs
 """
 
-import io
-import logging
 import os
-import re
 import sys
 import tempfile
 import time
-from pathlib import Path
-
-import pytest
 
 from prismalog.log import LoggingConfig, get_logger
 
@@ -124,3 +118,106 @@ class TestLogFormat:
 
         content = log_files[0].read_text()
         assert "Test message" in content
+
+    def test_datefmt_default_value(self):
+        """Test that the default datefmt value is applied."""
+        LoggingConfig.reset()
+        LoggingConfig.initialize(config_file=None, use_cli_args=False)
+        assert LoggingConfig.get("datefmt") == "%Y-%m-%d %H:%M:%S.%f"
+
+    def test_datefmt_from_env(self):
+        """Test setting datefmt via environment variable."""
+        LoggingConfig.reset()
+        custom_fmt = "%H:%M:%S"
+        os.environ["LOG_DATEFMT"] = custom_fmt
+        LoggingConfig.initialize(config_file=None, use_cli_args=False)
+        assert LoggingConfig.get("datefmt") == custom_fmt
+        del os.environ["LOG_DATEFMT"]
+
+    def test_datefmt_from_github_env(self):
+        """Test setting datefmt via GitHub environment variable."""
+        LoggingConfig.reset()
+        custom_fmt = "%Y/%m/%d"
+        os.environ["GITHUB_LOG_DATEFMT"] = custom_fmt
+        LoggingConfig.initialize(config_file=None, use_cli_args=False)
+        assert LoggingConfig.get("datefmt") == custom_fmt
+        del os.environ["GITHUB_LOG_DATEFMT"]
+
+    def test_datefmt_from_yaml(self):
+        """Test setting datefmt via YAML configuration file."""
+        LoggingConfig.reset()
+        custom_fmt = "%a %b %d %H:%M:%S %Y"
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as f:
+            yaml_path = f.name
+            f.write(f"datefmt: '{custom_fmt}'\n")  # Ensure quotes if format has spaces
+
+        try:
+            LoggingConfig.initialize(config_file=yaml_path, use_cli_args=False)
+            assert LoggingConfig.get("datefmt") == custom_fmt
+        finally:
+            if os.path.exists(yaml_path):
+                os.unlink(yaml_path)
+
+    def test_datefmt_from_cli(self):
+        """Test setting datefmt via command-line argument."""
+        LoggingConfig.reset()
+        custom_fmt_unescaped = "%H:%M"
+        original_argv = sys.argv
+        try:
+            sys.argv = ["test_script.py", "--log-datefmt", custom_fmt_unescaped]
+            LoggingConfig.initialize(config_file=None, use_cli_args=True)
+            assert LoggingConfig.get("datefmt") == custom_fmt_unescaped
+        finally:
+            sys.argv = original_argv  # Restore original argv
+
+    def test_datefmt_priority_order(self):
+        """Test priority order specifically for datefmt."""
+        LoggingConfig.reset()
+        default_fmt = LoggingConfig.DEFAULT_CONFIG["datefmt"]
+        env_fmt = "%Y-%m"
+        yaml_fmt = "%m-%d-%Y"
+        cli_fmt_unescaped = "%H%M%S"
+
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as f:
+            yaml_path = f.name
+            f.write(f"datefmt: '{yaml_fmt}'\n")
+
+        original_argv = sys.argv
+        try:
+            # Set ENV var
+            os.environ["LOG_DATEFMT"] = env_fmt
+
+            # Set CLI arg using the UNESCAPED format
+            sys.argv = ["test_script.py", "--log-datefmt", cli_fmt_unescaped]
+
+            # Initialize with all sources
+            LoggingConfig.initialize(config_file=yaml_path, use_cli_args=True)
+
+            # CLI should win, assert the stored value is the unescaped one
+            assert LoggingConfig.get("datefmt") == cli_fmt_unescaped
+
+            # Test without CLI
+            sys.argv = ["test_script.py"]  # No relevant CLI arg
+            LoggingConfig.reset()
+            LoggingConfig.initialize(config_file=yaml_path, use_cli_args=True)
+            # YAML should win over ENV
+            assert LoggingConfig.get("datefmt") == yaml_fmt
+
+            # Test without CLI or YAML
+            LoggingConfig.reset()
+            LoggingConfig.initialize(config_file=None, use_cli_args=False)  # ENV only
+            # ENV should win over Default
+            assert LoggingConfig.get("datefmt") == env_fmt
+
+            # Test with only Default
+            del os.environ["LOG_DATEFMT"]
+            LoggingConfig.reset()
+            LoggingConfig.initialize(config_file=None, use_cli_args=False)
+            assert LoggingConfig.get("datefmt") == default_fmt
+
+        finally:
+            sys.argv = original_argv
+            if "LOG_DATEFMT" in os.environ:
+                del os.environ["LOG_DATEFMT"]
+            if os.path.exists(yaml_path):
+                os.unlink(yaml_path)

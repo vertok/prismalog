@@ -10,9 +10,8 @@ import json
 import os
 import re
 import subprocess
-from collections.abc import Mapping  # Add this import
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union, cast
+from typing import Any, Dict, List, Optional, TypedDict, Union
 
 
 # Define explicit types for the nested dictionaries
@@ -31,6 +30,8 @@ class RelativePerfDict(TypedDict):
 from prismalog.argparser import extract_logging_args, get_argument_parser
 from prismalog.log import LoggingConfig, get_logger
 
+# Set up the logging configuration
+os.environ["LOG_FILENAME"] = "performance_compare"
 # Create parser with standard logging arguments
 parser = get_argument_parser(description="prismalog Performance Comparison")
 
@@ -76,36 +77,36 @@ def extract_metrics(output: str) -> Dict[str, Union[str, float]]:
 
     # Extract log file size
     log_size_match = re.search(r"• Size: ([\d.]+) MB", output)
+    log_size_match = re.search(r"• Size: ([\d.]+) MB", output)
     if log_size_match:
         metrics["log_size_mb"] = float(log_size_match.group(1))
 
     return metrics
 
 
-def run_test(script_name: str) -> Optional[str]:
-    """Run a performance test script and capture output while showing logs in real-time."""
+def run_test(script_name: str, args: List[str] = []) -> Optional[str]:
+    """Run a performance test script with arguments and capture output."""
+    args_str = " ".join(args)
     print(f"\n{'-'*60}")
-    print(f"Running {script_name}...")
+    print(f"Running {script_name} {args_str}...")
     print(f"{'-'*60}")
 
-    # Check if the script exists
     script_path = os.path.join(os.path.dirname(__file__), script_name)
     if not os.path.exists(script_path):
         logger.warning(f"Script not found: {script_path}")
         return None
 
     try:
-        # Run the script and stream output to console while also capturing it
+        command = ["python", script_path] + args  # Combine script and args
         output = []
         with subprocess.Popen(
-            ["python", script_path],
+            command,  # Use the combined command
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            bufsize=1,  # Line buffered
+            bufsize=1,
         ) as process:
-            # Read and display output in real-time
-            if process.stdout is not None:  # Add this check
+            if process.stdout is not None:
                 for line in iter(process.stdout.readline, ""):
                     if not line:
                         break
@@ -117,17 +118,17 @@ def run_test(script_name: str) -> Optional[str]:
             return_code = process.wait()
 
         if return_code != 0:
-            logger.error(f"{script_name} exited with code {return_code}")
+            logger.error(f"{script_name} {args_str} exited with code {return_code}")
             return None
 
         print(f"{'-'*60}")
-        print(f"Completed {script_name}")
+        print(f"Completed {script_name} {args_str}")
         print(f"{'-'*60}\n")
 
         return "".join(output)
 
     except Exception as e:
-        logger.error(f"Error running {script_name}: {e}")
+        logger.error(f"Error running {script_name} {args_str}: {e}")
         return None
 
 
@@ -165,34 +166,50 @@ def save_benchmark_results(results: Dict[str, Any], test_type: str) -> str:
 
 
 def main() -> None:
-    """Run all performance tests and compare results."""
+    """Run performance tests for different concurrency models and compare results."""
     print(f"\n{'='*80}")
     print(f"LOGGING PERFORMANCE COMPARISON - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*80}\n")
 
-    # Track available test results
     test_metrics = {}
 
-    # Run performance tests
     try:
-        # Run all tests and collect metrics
-        test_files = [
-            ("performance_test_multiprocessing.py", "multiproc", "Multiprocessing"),
-            ("performance_test_threading.py", "threading", "Multithreading"),
-            ("performance_test_mixed.py", "mixed", "Mixed Mode"),
-            ("standard_logging_benchmark.py", "std", "Standard Logging"),
+        # Define test configurations for the performance compare script
+        test_configs = [
+            # Config: (arguments_list, result_key, display_name)
+            (["-p", "3", "-t", "1"], "multiproc", "Multiprocessing (3p x 1t)"),
+            (["-p", "1", "-t", "3"], "threading", "Multithreading (1p x 3t)"),
+            (["-p", "2", "-t", "2"], "mixed", "Mixed Mode (2p x 2t)"),
         ]
 
-        for script_name, key, display_name in test_files:
-            output = run_test(script_name)
+        # Script to run for prismalog tests
+        prismalog_script = "performance_test.py"
+
+        for args_list, key, display_name in test_configs:
+            # Add the specific log filename for this test run
+            subprocess_args = args_list + ["--log-filename", key]  # Use the 'key' as the prefix
+
+            # Run the test with specific arguments including the log filename
+            output = run_test(prismalog_script, subprocess_args)  # Pass the modified args
             if output:
                 metrics = extract_metrics(output)
-                metrics["test"] = display_name
+                metrics["test"] = display_name  # Use the descriptive name
                 test_metrics[key] = metrics
                 save_benchmark_results(metrics, f"test_{key}")
 
+        # Optionally, give the standard logging test its own prefix
+        std_script = "standard_logging_benchmark.py"
+        std_output = run_test(std_script)  # Pass the args
+        if std_output:
+            std_metrics = extract_metrics(std_output)
+            std_metrics["test"] = "Standard Logging"
+            test_metrics["std"] = std_metrics
+            save_benchmark_results(std_metrics, "test_std")
+
         if not test_metrics:
-            logger.error("No test metrics collected. Please ensure at least one test script is available.")
+            logger.error(
+                "No test metrics collected. Please ensure benchmark scripts are available and run successfully."
+            )
             return
 
         # Define table structure

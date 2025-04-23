@@ -7,27 +7,46 @@ Python's standard logging with colored output, automatic log rotation, and
 improved handling of critical errors.
 
 Key components:
-- ColoredFormatter: Adds color-coding to console output based on log levels
-- MultiProcessingLog: Thread-safe and process-safe log handler with rotation support
+- ColoredFormatter: Adds color-coding to console output based on log levels.
+- MultiProcessingLog: Thread-safe and process-safe log handler using a shared
+                      lock and RotatingFileHandler for file output and rotation.
 - CriticalExitHandler: Optional handler that exits the program on critical errors
-- ColoredLogger: Main logger class with enhanced functionality
-- get_logger: Factory function to obtain properly configured loggers
+                       if configured via LoggingConfig.
+- ColoredLogger: Main logger class wrapping the standard logger, providing
+                 easy access to configured handlers and levels.
+- get_logger: Factory function to obtain properly configured logger instances,
+              handling initialization and configuration application.
 
 Features:
-- Up to 29K msgs/sec in multiprocessing mode
-- Colored console output for improved readability
-- Automatic log file rotation based on size
-- Process-safe and thread-safe logging
-- Special handling for critical errors
-- Configurable verbosity levels for different modules
-- Zero external dependencies
+- Performance: Optimized for speed, especially when using %(created)f timestamp format.
+               (Note: Performance figures depend heavily on configuration and environment).
+- Colored Console Output: Improves readability using ANSI color codes. Configurable
+                          via LoggingConfig ('colored_console').
+- Automatic Log File Rotation: Based on size ('rotation_size_mb') and backup count
+                               ('backup_count'). Can be disabled ('disable_rotation').
+- Process-Safe & Thread-Safe File Logging: Uses `MultiProcessingLog` with a
+                                           `multiprocessing.Lock` to prevent corruption.
+- Critical Error Handling: Option to exit the application on critical logs via
+                           `CriticalExitHandler` (controlled by 'exit_on_critical').
+- Configurable Verbosity: Set default levels ('default_level') and per-module levels
+                          ('external_loggers') via LoggingConfig.
+- Flexible Configuration: Leverages LoggingConfig for settings from defaults, files,
+                          environment variables, and CLI arguments.
 
 Example:
-    >>> from prismalog import get_logger
-    >>> logger = get_logger("my_module")
-    >>> logger.info("Application started")
-    >>> logger.debug("Detailed debugging information")
-    >>> logger.error("Something went wrong")
+    >>> from prismalog import get_logger, LoggingConfig
+    >>> # Initialize configuration (optional, happens automatically on first get_logger)
+    >>> # LoggingConfig.initialize(config_file="logging.yaml", use_cli_args=True)
+    >>>
+    >>> logger = get_logger(__name__)  # Use module name
+    >>> logger.info("Application started successfully.")
+    >>> logger.debug("Detailed debugging information for developers.")
+    >>> try:
+    ...     1 / 0
+    ... except ZeroDivisionError:
+    ...     logger.error("An error occurred during calculation.", exc_info=True) # Log exception info
+    >>> logger.critical("A critical failure occurred, application might exit if configured.")
+
 """
 
 import logging
@@ -111,6 +130,29 @@ class ColoredFormatter(logging.Formatter):
 
         return result
 
+    def formatTime(self, record: LogRecord, datefmt: Optional[str] = None) -> str:
+        """
+        Format the creation time of a LogRecord.
+
+        Overrides the default formatTime to provide support for microseconds
+        using the '%f' directive in the date format string.
+
+        Args:
+            record: The log record whose creation time is to be formatted.
+            datefmt: The format string for the date/time. If None, a default
+                     format ("%Y-%m-%d %H:%M:%S") is used.
+
+        Returns:
+            The formatted date/time string.
+        """
+        dt = datetime.fromtimestamp(record.created)
+        if datefmt:
+            # Support %f for microseconds
+            str_datefmt = dt.strftime(datefmt)
+        else:
+            str_datefmt = dt.strftime("%Y-%m-%d %H:%M:%S")
+        return str_datefmt
+
 
 class MultiProcessingLog(logging.Handler):
     """
@@ -142,6 +184,9 @@ class MultiProcessingLog(logging.Handler):
         self.maxBytes = maxBytes  # pylint: disable=invalid-name
         self.backupCount = backupCount  # pylint: disable=invalid-name
         self._handler: Optional[RotatingFileHandler] = None  # Add type annotation
+
+        # Determine and store prefix during initialization
+        self.filename_prefix: str = LoggingConfig.get_filename_prefix()
 
         # Update the class-level active log file
         with self.__class__.file_lock:
@@ -249,7 +294,8 @@ class MultiProcessingLog(logging.Handler):
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 unique_suffix = str(os.getpid() % 10000)  # Use last 4 digits of PID for uniqueness
                 log_dir = os.path.dirname(self.filename)
-                new_filename = os.path.join(log_dir, f"app_{timestamp}_{unique_suffix}.log")
+
+                new_filename = os.path.join(log_dir, f"{self.filename_prefix}_{timestamp}_{unique_suffix}.log")
 
                 # Update the filename used by this instance
                 self.filename = new_filename
@@ -427,12 +473,19 @@ class ColoredLogger:
     def _add_handlers_to_logger(self, logger: logging.Logger) -> None:
         """Add necessary handlers to the logger."""
 
-        # Get format string from config
+        # Get format string and date format from config
         log_format = LoggingConfig.get("log_format", "%(asctime)s - %(name)s - [%(levelname)s] - %(message)s")
+        datefmt = LoggingConfig.get("datefmt", "%Y-%m-%d %H:%M:%S.%f")
 
         # Console Handler
         ch = logging.StreamHandler(sys.stdout)
-        ch.setFormatter(ColoredFormatter(fmt=log_format, colored=LoggingConfig.get("colored_console", True)))
+        ch.setFormatter(
+            ColoredFormatter(
+                fmt=log_format,
+                datefmt=datefmt,
+                colored=LoggingConfig.get("colored_console", True),
+            )
+        )
         ch.setLevel(self._configured_level)
         logger.addHandler(ch)
 
@@ -441,10 +494,6 @@ class ColoredLogger:
             self.__class__._file_handler = self.__class__.setup_file_handler()
 
         if self.__class__._file_handler:
-            # Set the same format for file handler
-            self.__class__._file_handler.setFormatter(
-                ColoredFormatter(fmt=log_format, colored=LoggingConfig.get("colored_file", False))
-            )
             logger.addHandler(self.__class__._file_handler)
 
     @classmethod
@@ -462,23 +511,21 @@ class ColoredLogger:
         if cls._file_handler and not log_file_path:
             return cls._file_handler
 
-        # --- Determine Log File Path ---
         if log_file_path is None:
-            # Get log directory from config, default to "logs"
             log_dir = LoggingConfig.get("log_dir", "logs")
             os.makedirs(log_dir, exist_ok=True)
 
-            # Generate filename (keeping existing logic)
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             unique_suffix = str(os.getpid() % 1000)
-            log_file_path = os.path.join(log_dir, f"app_{timestamp}_{unique_suffix}.log")
 
-        cls._log_file_path = log_file_path  # Store the determined path
+            filename_prefix = LoggingConfig.get_filename_prefix()
+            LoggingConfig.debug_print(f"Determined filename prefix: '{filename_prefix}'")
 
-        # --- Rotation Settings from Config ---
+            log_file_path = os.path.join(log_dir, f"{filename_prefix}_{timestamp}_{unique_suffix}.log")
+
+        cls._log_file_path = log_file_path
+
         disable_rotation = LoggingConfig.get("disable_rotation", False)
-        # Also check env var for compatibility if needed, though config should be primary
-        # disable_rotation = disable_rotation or os.environ.get("LOG_DISABLE_ROTATION") == "1"
 
         handler: MultiProcessingLog  # Type hint
 
@@ -488,12 +535,10 @@ class ColoredLogger:
         else:
             # Get rotation size from config, default 10MB
             rotation_size_mb = LoggingConfig.get("rotation_size_mb", 10)
-            # Ensure minimum size (e.g., 1KB)
             rotation_size_bytes = max(1024, int(rotation_size_mb * 1024 * 1024))
 
             # Get backup count from config, default 5
             backup_count = LoggingConfig.get("backup_count", 5)
-            # Ensure minimum count (e.g., 1)
             backup_count = max(1, backup_count)
 
             LoggingConfig.debug_print(
@@ -503,18 +548,17 @@ class ColoredLogger:
             )
             handler = MultiProcessingLog(log_file_path, "a", rotation_size_bytes, backup_count)
 
-        # --- Formatter from Config ---
-        default_format = "%(asctime)s - %(filename)s - %(name)s - [%(levelname)s] - %(message)s"
+        default_format = (
+            "%(asctime)s - %(filename)s - %(process)d - %(thread)d - %(name)s - [%(levelname)s] - %(message)s"
+        )
         log_format = LoggingConfig.get("log_format", default_format)
+        datefmt = LoggingConfig.get("datefmt", "%Y-%m-%d %H:%M:%S.%f")
 
-        # Get color setting for file handler from config, default to False
         use_file_color = LoggingConfig.get("colored_file", False)
 
-        # Use the config setting for 'colored'
-        handler.setFormatter(ColoredFormatter(log_format, colored=use_file_color))
+        formatter = ColoredFormatter(fmt=log_format, datefmt=datefmt, colored=use_file_color)
+        handler.setFormatter(formatter)
 
-        # --- Level ---
-        # File handler always logs at DEBUG level as per original design
         handler.setLevel(logging.DEBUG)
 
         return handler
@@ -558,27 +602,27 @@ class ColoredLogger:
                 pass
             cls._file_handler = None
 
-        # For test_logger_reset test, ensure a different path is generated
         if new_file:
-            # ensure CLI args have been processed
             log_dir = LoggingConfig.get("log_dir", "logs")
 
-            # Make absolute path if needed
             if not os.path.isabs(log_dir):
                 log_dir = os.path.abspath(log_dir)
 
             os.makedirs(log_dir, exist_ok=True)
 
-            # Use time.time() to ensure uniqueness, even for fast successive calls
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            unique_suffix = str(int(time.time() * 1000) % 10000)  # Use milliseconds as unique ID
-            cls._log_file_path = os.path.join(log_dir, f"app_{timestamp}_{unique_suffix}.log")
+            unique_suffix = str(int(time.time() * 1000) % 10000)
 
-        # Create a new file handler
+            filename = LoggingConfig.get_filename_prefix()
+            LoggingConfig.debug_print(
+                f"Using log_filename after reset: '{filename}' from LoggingConfig.get_filename_prefix()"
+            )
+
+            cls._log_file_path = os.path.join(log_dir, f"{filename}_{timestamp}_{unique_suffix}.log")
+
         if cls._file_handler is None:
             cls._file_handler = cls.setup_file_handler(cls._log_file_path)
 
-        # Reinitialize loggers that were previously registered
         for name in logger_names:
             get_logger(name)
 
@@ -597,13 +641,10 @@ class ColoredLogger:
             logger_instance = cls._initialized_loggers[name]
 
             if isinstance(level, int):
-                # If it's already an integer level, use it directly
                 level_value = level
             else:
-                # If it's a string, use map_level to convert it
                 level_value = LoggingConfig.map_level(level)
 
-            # Update the level in both the wrapper and the underlying logger
             logger_instance.level = level_value
             logger_instance.logger.setLevel(level_value)
 
@@ -625,8 +666,6 @@ class ColoredLogger:
         Returns:
             The configured log level as an integer
         """
-        # This abstracts the implementation details from the tests
-        # For tests, report the configured level, not the actual logger level
         return self._configured_level
 
     @level.setter
@@ -639,7 +678,6 @@ class ColoredLogger:
         """
         self._configured_level = value
 
-        # Update console handlers only
         if hasattr(self, "logger") and self.logger:
             for handler in self.logger.handlers:
                 is_stream_handler = isinstance(handler, logging.StreamHandler)
@@ -648,7 +686,6 @@ class ColoredLogger:
                 if is_stream_handler and is_not_multiprocessing_log:
                     handler.setLevel(value)
 
-    # Logger methods - delegate to the underlying logger
     def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Logs a debug message."""
         self.logger.debug(msg, *args, **kwargs)
@@ -697,7 +734,6 @@ class ColoredLogger:
         self.logger.exception(msg, *args, **kwargs)
 
 
-# At module level
 _EXTERNAL_LOGGERS_CONFIGURED = False
 
 
@@ -706,16 +742,12 @@ def configure_external_loggers(external_loggers: Dict[str, str]) -> None:
     external_loggers = LoggingConfig.get("external_loggers", {})
 
     for logger_name, level in external_loggers.items():
-        # Get the logger for this package
         logger = logging.getLogger(logger_name)
 
-        # Convert level string to logging constant
         level_value = LoggingConfig.map_level(level)
 
-        # Set the level
         logger.setLevel(level_value)
 
-        # Disable propagation to avoid duplicate messages
         logger.propagate = False
 
         LoggingConfig.debug_print(f"Set external logger '{logger_name}' to level {level}")
@@ -744,12 +776,10 @@ def create_logger(
     logger = logging.getLogger(name)
     logger.setLevel(level or logging.INFO)
 
-    # Console handler
     console_handler = StreamHandler(sys.stdout)
     console_handler.setFormatter(ColoredFormatter(fmt=format_string or "%(message)s"))
     logger.addHandler(console_handler)
 
-    # File handler
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
         file_path = os.path.join(log_dir, f"{name}.log")
@@ -777,12 +807,10 @@ def init_root_logger(
     root_logger = logging.getLogger()
     root_logger.setLevel(level or logging.INFO)
 
-    # Console handler
     console_handler = StreamHandler(sys.stdout)
     console_handler.setFormatter(ColoredFormatter(fmt=format_string or "%(message)s", colored=colored_console))
     root_logger.addHandler(console_handler)
 
-    # File handler
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
         file_path = os.path.join(log_dir, "root.log")
@@ -862,16 +890,13 @@ def get_logger(name: str, verbose: Optional[str] = None) -> Union[ColoredLogger,
     """
     global _EXTERNAL_LOGGERS_CONFIGURED
 
-    # Configure external loggers only once
     if not _EXTERNAL_LOGGERS_CONFIGURED:
         configure_external_loggers(LoggingConfig.get("external_loggers", {}))
         _EXTERNAL_LOGGERS_CONFIGURED = True
 
-    # Check if logger already exists
     if name in ColoredLogger._initialized_loggers:
         existing_logger = ColoredLogger._initialized_loggers[name]
 
-        # If explicit verbose parameter is provided, always apply it
         if verbose is not None:
             original_level = existing_logger.level
             ColoredLogger.update_logger_level(name, verbose)
@@ -883,7 +908,6 @@ def get_logger(name: str, verbose: Optional[str] = None) -> Union[ColoredLogger,
                 )
             return existing_logger
 
-        # Check if there's a specific config for this logger in external_loggers
         external_loggers = LoggingConfig.get("external_loggers", {})
         if name in external_loggers:
             original_level = existing_logger.level
@@ -896,7 +920,6 @@ def get_logger(name: str, verbose: Optional[str] = None) -> Union[ColoredLogger,
                 )
             return existing_logger
 
-        # Check if there's a module-specific level that should be applied
         module_levels = LoggingConfig.get("module_levels", {})
         if name in module_levels:
             original_level = existing_logger.level
@@ -910,7 +933,6 @@ def get_logger(name: str, verbose: Optional[str] = None) -> Union[ColoredLogger,
 
         return existing_logger
 
-    # Use explicit level, then check external_loggers config, then check module_levels, then use default
     if verbose is None:
         external_loggers = LoggingConfig.get("external_loggers", {})
         module_levels = LoggingConfig.get("module_levels", {})
@@ -922,6 +944,5 @@ def get_logger(name: str, verbose: Optional[str] = None) -> Union[ColoredLogger,
         else:
             verbose = LoggingConfig.get("default_level", "INFO")
 
-    # Create new logger
     logger = ColoredLogger(name, verbose)
     return logger

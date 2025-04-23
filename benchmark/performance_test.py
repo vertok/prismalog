@@ -19,14 +19,18 @@ import statistics
 import threading
 import time
 from datetime import datetime
+from multiprocessing.synchronize import Barrier as BarrierType
 from pathlib import Path
 from queue import Queue
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List
 
+from prismalog.argparser import get_argument_parser
+from prismalog.config import LoggingConfig
 from prismalog.log import ColoredLogger, get_logger
 
-# Disable rotation for performance tests to avoid timing variations
-os.environ["LOG_DISABLE_ROTATION"] = "1"
+# Configuration
+TARGET_LOG_MESSAGES = 12000  # Define the target total messages
+BATCH_SIZE = 100  # pylint: disable=invalid-name
 
 
 def get_memory_usage() -> float:
@@ -45,7 +49,12 @@ def get_memory_usage() -> float:
 
 
 def thread_worker(
-    thread_id: int, process_id: int, thread_results: Queue, num_messages: int, batch_size: int = 100
+    thread_id: int,
+    process_id: int,
+    thread_results: Queue,
+    num_messages: int,
+    sync_barrier: BarrierType,
+    batch_size: int = 100,
 ) -> None:
     """
     Worker thread that runs within a process and logs messages.
@@ -55,14 +64,14 @@ def thread_worker(
         process_id: Identifier for the parent process
         thread_results: Queue to collect results from this thread
         num_messages: Number of messages to log per level
+        sync_barrier: Synchronization barrier for thread coordination
         batch_size: Number of messages to batch for timing measurements
     """
     # Create a thread-specific logger
     logger = get_logger(f"process_{process_id}_thread_{thread_id}", verbose="DEBUG")
 
-    # Warm up
-    for _ in range(3):
-        logger.debug(f"Warm-up message from P{process_id}-T{thread_id}")
+    # All threads will block here until total_workers threads have called wait()
+    sync_barrier.wait()
 
     # Track timing metrics
     timings: Dict[str, List[float]] = {"debug": [], "info": [], "warning": [], "error": []}
@@ -109,10 +118,9 @@ def thread_worker(
         batch_time = end - start
         timings["warning"].append(batch_time / batch_size_actual)
 
-    # Log error messages (fewer to avoid cluttering logs)
-    error_count = max(10, num_messages // 10)
-    for batch_start in range(0, error_count, batch_size):
-        batch_end = min(batch_start + batch_size, error_count)
+    # Log error messages
+    for batch_start in range(0, num_messages, batch_size):
+        batch_end = min(batch_start + batch_size, num_messages)
         batch_size_actual = batch_end - batch_start
 
         start = time.time()
@@ -132,14 +140,19 @@ def thread_worker(
             "thread_id": thread_id,
             "process_id": process_id,
             "duration": worker_duration,
-            "message_count": num_messages * 3 + error_count,  # debug + info + warning + error
+            "message_count": num_messages * 4,  # debug + info + warning + error
             "timings": timings,
         }
     )
 
 
 def process_with_threads(
-    process_id: int, num_threads: int, num_messages: int, result_queue: multiprocessing.Queue, batch_size: int = 100
+    process_id: int,
+    num_threads: int,
+    num_messages: int,
+    result_queue: multiprocessing.Queue,
+    sync_barrier: BarrierType,
+    batch_size: int = 100,
 ) -> None:
     """
     Worker process that spawns multiple threads.
@@ -149,6 +162,7 @@ def process_with_threads(
         num_threads: Number of threads to spawn
         num_messages: Number of messages per thread per level
         result_queue: Queue to report results back to main process
+        sync_barrier: Synchronization barrier for thread coordination
         batch_size: Batch size for timing measurements
     """
     # Track memory usage for this process
@@ -162,9 +176,10 @@ def process_with_threads(
     threads = []
     for thread_id in range(num_threads):
         t = threading.Thread(
-            target=thread_worker, args=(thread_id, process_id, thread_results, num_messages, batch_size)
+            target=thread_worker, args=(thread_id, process_id, thread_results, num_messages, sync_barrier, batch_size)
         )
         threads.append(t)
+
         t.start()
 
     # Wait for all threads to complete
@@ -232,30 +247,79 @@ def format_statistics(values: List[float]) -> str:
 def main() -> None:
     """
     Main function to run the mixed concurrency performance test.
-
-    This function:
-    1. Starts multiple processes, each running multiple threads
-    2. Collects performance metrics from all processes and threads
-    3. Calculates aggregate statistics
-    4. Tests memory cleanup by resetting the logger
-    5. Outputs a comprehensive performance report
-
-    Run this function to benchmark the prismalog package's performance
-    in a mixed multiprocessing and multithreading environment.
+    Uses prismalog.argparser for standard logging arguments.
     """
-    # Configuration - generate approximately the same number of
-    # total messages as the other tests for fair comparison
-    NUM_PROCESSES = 3  # pylint: disable=invalid-name
-    THREADS_PER_PROCESS = 2  # pylint: disable=invalid-name
-    MESSAGES_PER_THREAD = 1200  # pylint: disable=invalid-name
-    BATCH_SIZE = 100  # pylint: disable=invalid-name
+    # Get parser pre-populated with standard logging arguments
+    parser = get_argument_parser(description="prismalog Concurrency Benchmark")
+
+    # Add benchmark-specific arguments
+    parser.add_argument(
+        "-p",
+        "--processes",
+        type=int,
+        default=2,
+        dest="num_processes",
+        help="Number of worker processes to spawn.",
+    )
+    parser.add_argument(
+        "-t",
+        "--threads",
+        type=int,
+        default=2,
+        dest="threads_per_process",
+        help="Number of worker threads per process.",
+    )
+
+    # Parse all arguments (logging + benchmark-specific)
+    args = parser.parse_args()
+
+    num_processes = args.num_processes
+    threads_per_process = args.threads_per_process
+
+    # Define benchmark-specific overrides that MUST apply
+    config_overrides = {
+        "disable_rotation": True,  # Ensure rotation is off for benchmark
+    }
+
+    # Determine config_file path from args if applicable, otherwise None
+    config_file_path = getattr(args, "config_file", None)
+
+    # Initialize using parsed args (use_cli_args=True handles extraction)
+    # and apply benchmark overrides with highest priority
+    LoggingConfig.initialize(config_file=config_file_path, use_cli_args=True, **config_overrides)
+
+    # Calculations
+    total_workers = num_processes * threads_per_process
+    if total_workers == 0:
+        raise ValueError("Number of processes and threads per process must be > 0")
+
+    messages_per_level_float = TARGET_LOG_MESSAGES / (total_workers * 4)
+    messages_per_thread = max(1, round(messages_per_level_float))
+
+    synchronizer = multiprocessing.Barrier(total_workers)
+
+    actual_total_messages = total_workers * messages_per_thread * 4
+
+    # Determine Test Type
+    if threads_per_process == 1 and num_processes > 1:
+        test_type = "Multiprocessing"
+    elif num_processes == 1 and threads_per_process > 1:
+        test_type = "Multithreading"
+    elif num_processes == 1 and threads_per_process == 1:
+        test_type = "Single Process/Thread"  # Handle the 1x1 case
+    else:
+        test_type = "Mixed"
 
     print(f"\n{'='*60}")
-    print(f"MIXED CONCURRENCY LOGGER PERFORMANCE TEST - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"CONCURRENCY LOGGER PERFORMANCE TEST - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*60}")
-    print(f"• Processes: {NUM_PROCESSES}")
-    print(f"• Threads per process: {THREADS_PER_PROCESS}")
-    print(f"• Messages per level per thread: {MESSAGES_PER_THREAD}")
+    print(f"• Test Type: {test_type}")
+    print(f"• Processes: {num_processes}")
+    print(f"• Threads per process: {threads_per_process}")
+    print(f"• Total Workers: {total_workers}")
+    print(f"• Target Total Messages: ~{TARGET_LOG_MESSAGES}")
+    print(f"• Calculated Messages per Thread (per level): {messages_per_thread}")
+    print(f"• Calculated Actual Total Messages: {actual_total_messages}")
     print(f"• Batch size for timing: {BATCH_SIZE}")
     print(f"{'='*60}\n")
 
@@ -284,35 +348,37 @@ def main() -> None:
     processes = []
     result_queue: multiprocessing.Queue = multiprocessing.Queue()
 
-    # Start the processes, each with multiple threads
-    for pid in range(NUM_PROCESSES):
+    for pid in range(num_processes):
         p = multiprocessing.Process(
-            target=process_with_threads, args=(pid, THREADS_PER_PROCESS, MESSAGES_PER_THREAD, result_queue, BATCH_SIZE)
+            target=process_with_threads,
+            args=(
+                pid,
+                threads_per_process,
+                messages_per_thread,
+                result_queue,
+                synchronizer,
+                BATCH_SIZE,
+            ),
         )
         processes.append(p)
         p.start()
-        print(f"• Started process {pid+1}/{NUM_PROCESSES} (PID: {p.pid}) with {THREADS_PER_PROCESS} threads")
+        print(f"• Started process {pid+1}/{num_processes} (PID: {p.pid}) with {threads_per_process} threads")
 
-    # Wait for all processes to complete
     print("\nWaiting for processes and threads to complete...")
     for p in processes:
         p.join()
 
-    # Collect process results
-    process_results = [result_queue.get() for _ in range(NUM_PROCESSES)]
+    process_results = [result_queue.get() for _ in range(num_processes)]
 
-    # Calculate aggregate statistics
     total_duration = time.time() - test_start
     total_messages = sum(p["message_count"] for p in process_results)
 
-    # Aggregate timing data from all processes and threads
     all_timings: Dict[str, List[float]] = {"debug": [], "info": [], "warning": [], "error": []}
 
     for p_result in process_results:
         for level, timings in p_result["timings"].items():
             all_timings[level].extend(timings)
 
-    # Measure log file size
     if log_file is not None:
         try:
             log_size = os.path.getsize(log_file) / (1024 * 1024)  # MB
@@ -321,7 +387,6 @@ def main() -> None:
     else:
         log_size = 0
 
-    # Final memory usage
     gc.collect()
     final_memory = get_memory_usage()
 
@@ -336,7 +401,6 @@ def main() -> None:
         final_log_files = 0
     print(f"• Log files created: {final_log_files - initial_log_files}")
 
-    # Print results
     print(f"\n{'='*60}")
     print("PERFORMANCE RESULTS")
     print(f"{'='*60}")
@@ -361,7 +425,6 @@ def main() -> None:
     print(f"• Path: {log_file}")
     print(f"• Size: {log_size:.2f} MB")
 
-    # Memory cleanup test
     print(f"\n{'='*60}")
     print("MEMORY CLEANUP TEST")
     print(f"{'='*60}")

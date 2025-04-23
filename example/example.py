@@ -50,7 +50,7 @@ def main() -> None:
     # Create parser with standard logging arguments
     parser = get_argument_parser(description="prismalog Example")
 
-    # Add your own arguments if needed
+    # Add own arguments if needed
     parser.add_argument("--demo-mode", action="store_true", help="Run in demo mode")
 
     # Parse arguments

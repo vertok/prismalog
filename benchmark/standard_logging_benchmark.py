@@ -23,7 +23,7 @@ from queue import Queue
 from typing import Any, Dict, List, Optional, Tuple
 
 # Configuration
-NUM_THREADS = 4
+NUM_THREADS = 3
 MESSAGES_PER_THREAD = 1200
 BATCH_SIZE = 100
 
@@ -45,7 +45,7 @@ logging.basicConfig(
 def log_benchmark_results() -> None:
     logging.info("Starting benchmark test")
 
-    # Log your benchmark results here
+    # Log benchmark results
     logging.info("Test results: ...")
     logging.info("Performance metrics: ...")
 

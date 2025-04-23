@@ -5,7 +5,7 @@ import os
 
 import pytest
 
-from prismalog.log import ColoredFormatter, ColoredLogger, LoggingConfig, get_logger
+from prismalog.log import ColoredLogger, LoggingConfig, get_logger
 
 
 @pytest.fixture

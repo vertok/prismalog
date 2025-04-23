@@ -60,16 +60,16 @@ html_css_files = [
     "custom.css",
 ]
 
-# Add a logo if you have one
-html_logo = "_static/prismalog_logo.png"  # Create or add your logo
-html_favicon = "_static/favicon.ico"  # Add a favicon
+# Add a logo
+html_logo = "_static/prismalog_logo.png"
+html_favicon = "_static/favicon.ico"
 
 # Add GitHub links
 html_context = {
     "display_github": True,
-    "github_user": "vertok",  # Replace with your GitHub username
-    "github_repo": "prismalog",  # Replace with your GitHub repo name
-    "github_version": "main",  # Replace with your GitHub branch
+    "github_user": "vertok",
+    "github_repo": "prismalog",
+    "github_version": "main",
     "conf_py_path": "/docs/source/",
     "version": release,
     "display_version": True,

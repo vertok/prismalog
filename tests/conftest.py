@@ -6,11 +6,8 @@ import multiprocessing
 import os
 import sys
 import tempfile
-import time
 from contextlib import contextmanager
-from pathlib import Path
 from queue import Queue
-from unittest.mock import patch
 
 import pytest
 

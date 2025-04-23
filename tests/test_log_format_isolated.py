@@ -1,3 +1,5 @@
+""" Test suite for log formatting issues in prismalog. """
+
 import io
 import logging
 import os

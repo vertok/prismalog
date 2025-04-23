@@ -5,13 +5,7 @@ This module tests how different types of configuration values are processed
 from various sources including environment variables, command-line arguments, and configuration files.
 """
 
-import argparse
-import io
-import logging
 import os
-import re
-import sys
-import tempfile
 from unittest.mock import patch
 
 import pytest

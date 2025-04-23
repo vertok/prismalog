@@ -32,6 +32,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Step 2.5: Cache dependencies
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py', '**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       # Step 3: Install dependencies (Install dev and docs extras)
       - name: Install dependencies
         run: |
@@ -64,9 +73,9 @@ jobs:
       - name: Test logging performance
         if: matrix.python-version == '3.10'
         run: |
-          python benchmark/performance_test_multiprocessing.py > reports/performance_py${{ matrix.python-version }}.txt
+          python benchmark/performance_test.py -p 3 -t 1 > reports/performance_py${{ matrix.python-version }}.txt
           MSGS_PER_SEC=$(grep -oP '(?<=Messages per second: )[0-9.]+' reports/performance_py${{ matrix.python-version }}.txt || echo "0")
-          echo "## Performance: $MSGS_PER_SEC messages/sec" >> $GITHUB_STEP_SUMMARY
+          echo "## Performance (3p x 1t): $MSGS_PER_SEC messages/sec" >> $GITHUB_STEP_SUMMARY # Updated summary text
 
       # Step 7: Run comprehensive performance comparison (only for Python 3.10 to avoid long run times)
       - name: Run comprehensive performance comparison

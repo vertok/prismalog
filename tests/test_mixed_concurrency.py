@@ -14,7 +14,6 @@ applications. It verifies:
 
 import multiprocessing
 import os
-import random
 import re
 import threading
 import time
@@ -23,7 +22,7 @@ from typing import List
 
 import pytest
 
-from prismalog.log import ColoredLogger, LoggingConfig, get_logger
+from prismalog.log import get_logger
 
 
 @pytest.mark.concurrency

@@ -4,7 +4,7 @@ This directory contains examples demonstrating how to use the prismalog package 
 
 ## Core Features (Zero Dependencies)
 
-Prismalog's core logging functionality requires **no external dependencies**. You can use all of the following features without installing anything beyond the Python standard library:
+prismalog's core logging functionality requires **no external dependencies**. You can use all of the following features without installing anything beyond the Python standard library:
 
 - Colored console logging
 - Multi-process safe logging

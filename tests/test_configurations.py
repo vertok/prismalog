@@ -5,6 +5,7 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 
 from prismalog.log import ColoredLogger, CriticalExitHandler, LoggingConfig, MultiProcessingLog, get_logger
@@ -144,9 +145,6 @@ class TestConfigurationsImpact(unittest.TestCase):
             # Print progress occasionally
             if i % 100 == 0 and i > 0:
                 print(f"Wrote {i} messages")
-
-        # Give time for rotation to complete
-        import time
 
         time.sleep(0.5)
 
@@ -909,3 +907,141 @@ class TestConfigurationsImpact(unittest.TestCase):
         # 4. Test creating a logger with this module name
         test_logger = get_logger("test_module")
         self.assertEqual(test_logger.level, logging.DEBUG, "Logger should inherit level from module_levels config")
+
+    def test_log_filename_default_value(self):
+        """Test that the default log_filename value is applied."""
+        LoggingConfig.reset()
+        LoggingConfig.initialize(config_file=None, use_cli_args=False)
+        assert LoggingConfig.get("log_filename") == "app"
+
+    def test_log_filename_from_env(self):
+        """Test setting log_filename via environment variable."""
+        LoggingConfig.reset()
+        custom_name = "env_test_log"
+        os.environ["LOG_FILENAME"] = custom_name
+        try:
+            LoggingConfig.initialize(config_file=None, use_cli_args=False)
+            assert LoggingConfig.get("log_filename") == custom_name
+        finally:
+            if "LOG_FILENAME" in os.environ:
+                del os.environ["LOG_FILENAME"]
+
+    def test_log_filename_from_github_env(self):
+        """Test setting log_filename via GitHub environment variable."""
+        LoggingConfig.reset()
+        custom_name = "github_test_log"
+        os.environ["GITHUB_LOG_FILENAME"] = custom_name
+        try:
+            LoggingConfig.initialize(config_file=None, use_cli_args=False)
+            assert LoggingConfig.get("log_filename") == custom_name
+        finally:
+            if "GITHUB_LOG_FILENAME" in os.environ:
+                del os.environ["GITHUB_LOG_FILENAME"]
+
+    def test_log_filename_from_yaml(self):
+        """Test setting log_filename via YAML configuration file."""
+        LoggingConfig.reset()
+        custom_name = "yaml_test_log"
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as f:
+            yaml_path = f.name
+            f.write(f"log_filename: '{custom_name}'\n")
+
+        try:
+            LoggingConfig.initialize(config_file=yaml_path, use_cli_args=False)
+            assert LoggingConfig.get("log_filename") == custom_name
+        finally:
+            if os.path.exists(yaml_path):
+                os.unlink(yaml_path)
+
+    def test_log_filename_from_cli(self):
+        """Test setting log_filename via command-line argument."""
+        LoggingConfig.reset()
+        custom_name = "cli_test_log"
+        original_argv = sys.argv
+        try:
+            sys.argv = ["test_script.py", "--log-filename", custom_name]
+            LoggingConfig.initialize(config_file=None, use_cli_args=True)
+            assert LoggingConfig.get("log_filename") == custom_name
+        finally:
+            sys.argv = original_argv  # Restore original argv
+
+    def test_log_filename_priority_order(self):
+        """Test priority order specifically for log_filename."""
+        LoggingConfig.reset()
+        default_name = LoggingConfig.DEFAULT_CONFIG["log_filename"]
+        env_name = "env_priority"
+        yaml_name = "yaml_priority"
+        cli_name = "cli_priority"
+
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as f:
+            yaml_path = f.name
+            f.write(f"log_filename: '{yaml_name}'\n")
+
+        original_argv = sys.argv
+        try:
+            # Set ENV var
+            os.environ["LOG_FILENAME"] = env_name
+
+            # Set CLI arg
+            sys.argv = ["test_script.py", "--log-filename", cli_name]
+
+            # Initialize with all sources
+            LoggingConfig.initialize(config_file=yaml_path, use_cli_args=True)
+            # CLI should win
+            assert LoggingConfig.get("log_filename") == cli_name
+
+            # Test without CLI
+            sys.argv = ["test_script.py"]  # No relevant CLI arg
+            LoggingConfig.reset()
+            LoggingConfig.initialize(config_file=yaml_path, use_cli_args=True)
+            # YAML should win over ENV
+            assert LoggingConfig.get("log_filename") == yaml_name
+
+            # Test without CLI or YAML
+            LoggingConfig.reset()
+            LoggingConfig.initialize(config_file=None, use_cli_args=False)  # ENV only
+            # ENV should win over Default
+            assert LoggingConfig.get("log_filename") == env_name
+
+            # Test with only Default
+            del os.environ["LOG_FILENAME"]
+            LoggingConfig.reset()
+            LoggingConfig.initialize(config_file=None, use_cli_args=False)
+            assert LoggingConfig.get("log_filename") == default_name
+
+        finally:
+            sys.argv = original_argv
+            if "LOG_FILENAME" in os.environ:
+                del os.environ["LOG_FILENAME"]
+            if os.path.exists(yaml_path):
+                os.unlink(yaml_path)
+
+    def test_log_filename_actual_file_creation(self):
+        """Test that the log file created uses the configured log_filename."""
+        log_dir = os.path.join(self.temp_dir, "custom_logs")
+        custom_name = "my_service_log"
+
+        # Initialize with custom dir and filename
+        LoggingConfig.initialize(use_cli_args=False, log_dir=str(log_dir), log_filename=custom_name)
+
+        # Reset ColoredLogger to ensure it picks up the new config for file path
+        ColoredLogger.reset(new_file=True)
+
+        logger = get_logger("test_file_name")
+        logger.info("Testing custom filename.")
+
+        # Force flush and wait
+        for handler in logger.handlers:
+            handler.flush()
+        time.sleep(0.2)  # Give FS time
+
+        # Check for log file with the correct base name
+        log_files = [
+            f for f in os.listdir(log_dir) if f.startswith(custom_name) and f.endswith(".log")
+        ]  # Check for files starting with the custom name
+        assert log_files, f"No log files starting with '{custom_name}' found in {log_dir}"
+
+        # Verify content
+        with open(os.path.join(log_dir, log_files[0]), mode="r", encoding="utf-8") as f:
+            content = f.read()
+        assert "Testing custom filename." in content, f"Log message not found in {log_files[0]}"

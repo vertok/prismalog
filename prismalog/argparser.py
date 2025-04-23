@@ -20,6 +20,8 @@ Available Arguments:
 --log-level            Set the default logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 --log-dir              Directory where log files will be stored
 --log-format           Format string for log messages
+--log-datefmt          Format string for log timestamps
+--log-filename         Base filename prefix for log files
 --no-color             Disable colored console output
 --disable-rotation     Disable log file rotation
 --exit-on-critical     Exit program on critical errors
@@ -36,7 +38,7 @@ Usage Examples:
     # Create parser with standard logging arguments
     parser = get_argument_parser(description="My Application")
 
-    # Add your own application-specific arguments
+    # Add own application-specific arguments
     parser.add_argument("--my-option", help="Application-specific option")
 
     # Parse arguments
@@ -73,7 +75,7 @@ class LoggingArgumentParser:
     @staticmethod
     def add_arguments(parser: Optional[argparse.ArgumentParser] = None) -> argparse.ArgumentParser:
         """
-        Add standard prismalog arguments to an existing parser.
+        Add standard prismalog arguments to an existing parser using LoggingConfig.
 
         Args:
             parser: An existing ArgumentParser instance. If None, a new one is created.
@@ -98,6 +100,13 @@ class LoggingArgumentParser:
         parser.add_argument("--log-dir", help="Directory where log files will be stored")
 
         parser.add_argument("--log-format", help="Format string for log messages")
+
+        parser.add_argument(
+            "--log-filename",
+            "--logging-filename",
+            type=str,
+            help="Base filename for generated log files",
+        )
 
         # Boolean flags
         parser.add_argument(
@@ -143,13 +152,13 @@ class LoggingArgumentParser:
     @staticmethod
     def extract_logging_args(args: argparse.Namespace) -> Dict[str, Any]:
         """
-        Extract logging-related arguments from parsed args.
+        Extract logging-related arguments from parsed args based on LoggingConfig defaults.
 
         Args:
             args: The parsed args from ArgumentParser.parse_args()
 
         Returns:
-            Dictionary with only the logging-related arguments
+            Dictionary with only the logging-related arguments mapped to LoggingConfig keys.
         """
         # Define mappings from CLI arg names to config keys
         key_mappings = {
@@ -162,6 +171,10 @@ class LoggingArgumentParser:
             "exit_on_critical": "exit_on_critical",
             "rotation_size_mb": "rotation_size_mb",
             "backup_count": "backup_count",
+            "log_filename": "log_filename",
+            "logging_filename": "log_filename",
+            "log_datefmt": "datefmt",
+            "test_mode": "test_mode",
         }
 
         # Convert args to dictionary

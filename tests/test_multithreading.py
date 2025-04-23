@@ -9,8 +9,6 @@ concurrent logging from multiple threads without issues like:
 - Interleaved log lines
 """
 
-import os
-import re
 import threading
 import time
 from queue import Queue
@@ -18,7 +16,7 @@ from typing import List
 
 import pytest
 
-from prismalog.log import ColoredLogger, LoggingConfig, get_logger
+from prismalog.log import get_logger
 
 
 @pytest.mark.multithreading
