@@ -1,6 +1,6 @@
 
 ============================================================
-CONCURRENCY LOGGER PERFORMANCE TEST - 2025-04-23 22:06:40
+CONCURRENCY LOGGER PERFORMANCE TEST - 2025-05-15 08:19:13
 ============================================================
 • Test Type: Multiprocessing
 • Processes: 3
@@ -12,19 +12,19 @@ CONCURRENCY LOGGER PERFORMANCE TEST - 2025-04-23 22:06:40
 • Batch size for timing: 100
 ============================================================
 
-Initial memory usage: 16.48 MB
-Log file: /home/runner/work/prismalog/prismalog/logs/app_2025-04-23_22-06-40_725.log
+Initial memory usage: 16.32 MB
+Log file: /home/runner/work/prismalog/prismalog/logs/app_2025-05-15_08-19-13_3892.log
 
 Starting worker processes with threads...
-• Started process 1/3 (PID: 2047) with 1 threads
-• Started process 2/3 (PID: 2048) with 1 threads
-2025-04-23 22:06:40.732480 - log.py - process_0_thread_0 - [[94mDEBUG[0m] - Debug message 0 from P0-T0
-2025-04-23 22:06:40.732527 - log.py - process_1_thread_0 - [[94mDEBUG[0m] - Debug message 0 from P1-T0
-2025-04-23 22:06:40.732489 - log.py - process_2_thread_0 - [[94mDEBUG[0m] - Debug message 0 from P2-T0
-2025-04-23 22:06:40.732782 - log.py - process_0_thread_0 - [[94mDEBUG[0m] - Debug message 1 from P0-T0
-2025-04-23 22:06:40.732878 - log.py - process_1_thread_0 - [[94mDEBUG[0m] - Debug message 1 from P1-T0
-2025-04-23 22:06:40.733008 - log.py - process_2_thread_0 - [[94mDEBUG[0m] - Debug message 1 from P2-T0
-2025-04-23 22:06:40.733056 - log.py - process_0_thread_0 - [[94mDEBUG[0m] - Debug message 2 from P0-T0
-2025-04-23 22:06:40.733098 - log.py - process_2_thread_0 - [[94mDEBUG[0m] - Debug message 2 from P2-T0
-2025-04-23 22:06:40.733125 - log.py - process_0_thread_0 - [[94mDEBUG[0m] - Debug message 3 from P0-T0
-2025-04-23 22:06:40.733192 - log.py - process_1_thread_0 - [[94mDEBUG[0m] - Debug message 2 from P1-T0
+• Started process 1/3 (PID: 2133) with 1 threads
+• Started process 2/3 (PID: 2134) with 1 threads
+2025-05-15 08:19:13.899925 - performance_test.py - process_2_thread_0 - [[94mDEBUG[0m] - Debug message 0 from P2-T0
+2025-05-15 08:19:13.899955 - performance_test.py - process_0_thread_0 - [[94mDEBUG[0m] - Debug message 0 from P0-T0
+2025-05-15 08:19:13.899999 - performance_test.py - process_1_thread_0 - [[94mDEBUG[0m] - Debug message 0 from P1-T0
+2025-05-15 08:19:13.900235 - performance_test.py - process_0_thread_0 - [[94mDEBUG[0m] - Debug message 1 from P0-T0
+2025-05-15 08:19:13.900330 - performance_test.py - process_2_thread_0 - [[94mDEBUG[0m] - Debug message 1 from P2-T0
+2025-05-15 08:19:13.900444 - performance_test.py - process_1_thread_0 - [[94mDEBUG[0m] - Debug message 1 from P1-T0
+2025-05-15 08:19:13.900488 - performance_test.py - process_0_thread_0 - [[94mDEBUG[0m] - Debug message 2 from P0-T0
+2025-05-15 08:19:13.900544 - performance_test.py - process_2_thread_0 - [[94mDEBUG[0m] - Debug message 2 from P2-T0
+2025-05-15 08:19:13.900582 - performance_test.py - process_0_thread_0 - [[94mDEBUG[0m] - Debug message 3 from P0-T0
+2025-05-15 08:19:13.900672 - performance_test.py - process_1_thread_0 - [[94mDEBUG[0m] - Debug message 2 from P1-T0
