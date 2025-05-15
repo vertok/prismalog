@@ -688,11 +688,11 @@ class ColoredLogger:
 
     def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Logs a debug message."""
-        self.logger.debug(msg, *args, **kwargs)
+        self.logger.debug(msg, *args, **kwargs, stacklevel=2)
 
     def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Logs an info message."""
-        self.logger.info(msg, *args, **kwargs)
+        self.logger.info(msg, *args, **kwargs, stacklevel=2)
 
     def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """
@@ -703,7 +703,7 @@ class ColoredLogger:
             *args: Variable length argument list
             **kwargs: Arbitrary keyword arguments
         """
-        self.logger.warning(msg, *args, **kwargs)
+        self.logger.warning(msg, *args, **kwargs, stacklevel=2)
 
     def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """
@@ -714,7 +714,7 @@ class ColoredLogger:
             *args: Variable length argument list
             **kwargs: Arbitrary keyword arguments
         """
-        self.logger.error(msg, *args, **kwargs)
+        self.logger.error(msg, *args, **kwargs, stacklevel=2)
 
     def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """
@@ -727,11 +727,11 @@ class ColoredLogger:
             *args: Variable length argument list
             **kwargs: Arbitrary keyword arguments
         """
-        self.logger.critical(msg, *args, **kwargs)
+        self.logger.critical(msg, *args, **kwargs, stacklevel=2)
 
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Logs an exception message."""
-        self.logger.exception(msg, *args, **kwargs)
+        self.logger.exception(msg, *args, **kwargs, stacklevel=2)
 
 
 _EXTERNAL_LOGGERS_CONFIGURED = False
