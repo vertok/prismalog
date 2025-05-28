@@ -132,7 +132,7 @@ class LoggingConfig:
     }
 
     _instance = None
-    _config: Dict[str, Any] = {}  # Add type annotation
+    _config: Dict[str, Any] = {}
     _initialized = False
     _debug_mode = False
 
@@ -162,6 +162,7 @@ class LoggingConfig:
         The configuration is loaded in two phases:
         1. Collection Phase: Gather and convert configurations from all sources
         2. Application Phase: Apply configurations in priority order
+        3. Finalization Phase: Set the initialized flag
 
         Args:
             config_file: Path to configuration file (YAML)
@@ -186,6 +187,9 @@ class LoggingConfig:
 
         # Phase 2: Apply configurations in priority order
         cls._apply_configurations(config_sources)
+
+        # Phase 3: Set initialized flag
+        cls._initialized = True
 
         return cls._config
 
@@ -791,6 +795,11 @@ class LoggingConfig:
             "ERROR": logging.ERROR,
             "CRITICAL": logging.CRITICAL,
         }.get(level, logging.INFO)
+
+    @classmethod
+    def is_initialized(cls) -> bool:
+        """Check if logging configuration has been initialized."""
+        return cls._initialized
 
     @classmethod
     def reset(cls) -> Type["LoggingConfig"]:

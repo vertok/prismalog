@@ -12,7 +12,7 @@ from queue import Queue
 import pytest
 
 from prismalog.config import LoggingConfig
-from prismalog.log import ColoredFormatter, ColoredLogger, CriticalExitHandler, get_logger
+from prismalog.log import ColoredLogger, CriticalExitHandler, get_logger
 
 
 class TestCaptureIO:
